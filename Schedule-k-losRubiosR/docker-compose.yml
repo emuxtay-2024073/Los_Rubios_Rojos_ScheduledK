@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:7.0
+    container_name: scheduledk_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - scheduledk_mongo_data:/data/db
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: authentication-service/auth-service/Dockerfile
+    container_name: scheduledk_auth_service
+    environment:
+      - MongoDb__ConnectionString=mongodb://mongo:27017
+      - MongoDb__DatabaseName=scheduledk_db
+
+      - Jwt__Key=Qu3_R3gr353_3I_Mauu_La_Un0_m0n3da
+      - Jwt__Issuer=AuthService
+      - Jwt__Audience=ScheduleK_Clients
+
+      - ApplicationUrl=http://localhost:5065
+      - Security__CoordinatorSecret=SCHEDULEDK_COORDINATOR_SECRET
+
+      - EmailSettings__Email=rubioslosrojos@gmail.com
+      - EmailSettings__Password=hmzzmgoyhkzdghpm
+      - EmailSettings__Host=smtp.gmail.com
+      - EmailSettings__Port=587
+
+      - Internal__Secret=secret_interno_de_docker
+
+    ports:
+      - "5065:5065"
+    depends_on:
+      - mongo
+
+  server-admin:
+    build:
+      context: .
+      dockerfile: server-admin/Dockerfile
+    container_name: scheduledk_server_admin
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/schedule_k
+      - PORT=4000
+      - JWT_SECRET=Qu3_R3gr353_3I_Mauu_La_Un0_m0n3da
+
+      - EMAIL_USER=rubioslosrojos@gmail.com
+      - EMAIL_PASS=hmzzmgoyhkzdghpm
+
+      - AUTH_SERVICE_URL=http://auth-service:5065
+      - INTERNAL_AUTH_SECRET=secret_interno_de_docker
+
+    ports:
+      - "4000:4000"
+    depends_on:
+      - mongo
+      - auth-service
+
+volumes:
+  scheduledk_mongo_data:
