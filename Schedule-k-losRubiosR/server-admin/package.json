@@ -1,0 +1,36 @@
+{
+  "name": "server-admin",
+  "version": "1.0.0",
+  "description": "Servicio de administracion de citas para la gerencia de Fundacion Kinal",
+  "main": "index.js",
+  "type": "module",
+  "packageManager": "pnpm@10.29.2",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "cross-env NODE_NO_WARNINGS=1 nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Grupo los Rubios Rojos",
+  "license": "ISC",
+  "dependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.3",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.1",
+    "swagger": "^0.7.5",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0",
+    "nodemon": "^3.1.14"
+  }
+}

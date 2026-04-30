@@ -1,0 +1,39 @@
+@AuthService.Api_HostAddress = http://localhost:5065
+@email = usuario@example.com
+@password = Password123!
+
+### 1. REGISTRO - Crear nueva cuenta
+POST {{AuthService.Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}",
+  "role": "Padre"
+}
+
+# Prueba errores: deja campos vacíos para ver mensajes en español.
+# Ejemplo con rol inválido:
+# {
+#   "email": "{{email}}",
+#   "password": "123",
+#   "role": "Invalid"
+# }
+
+### 2. VERIFICACIÓN - Usar el token del registro anterior
+# El token se devuelve en la respuesta del registro si el envío de correo falla
+# Si el correo se envió correctamente, comprueba tu bandeja de entrada
+GET {{AuthService.Api_HostAddress}}/api/auth/verify?token=PASTE_TOKEN_HERE
+
+### 3. LOGIN - Inicia sesión con cuenta verificada
+POST {{AuthService.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### 4. WEATHERFORECAST - Ejemplo endpoint adicional
+GET {{AuthService.Api_HostAddress}}/weatherforecast/
+Accept: application/json
