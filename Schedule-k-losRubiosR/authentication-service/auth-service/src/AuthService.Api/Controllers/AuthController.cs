@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -31,7 +32,7 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     [SwaggerOperation(
         Summary = "Registrar nuevo usuario en Scheduled-K",
-        Description = "Permite registrar padres de familia o coordinadores en el sistema de citas de Scheduled-K. Los coordinadores requieren un código secreto especial para acceder a funciones administrativas. Nota para testeo: Código secreto de coordinador: `SCHEDULEDK_COORDINATOR_SECRET`"
+        Description = "Registra un usuario Padre (rol 'Padre'). Los roles de Coordinador o ADMIN deben asignarlos administradores desde el panel de administración."
     )]
     [SwaggerResponse(201, "Usuario registrado correctamente. Se envió un email de verificación.")]
     [SwaggerResponse(400, "Los datos proporcionados no son válidos o el email ya está registrado.")]
@@ -49,24 +50,19 @@ public class AuthController : ControllerBase
         if (await _context.Users.Find(u => u.Email == request.Email).AnyAsync())
             return BadRequest(new { message = "El usuario ya existe." });
 
-        if (request.Role == "Coordinador")
-        {
-            var secret = _config["Security:CoordinatorSecret"];
-            Console.WriteLine($"DEBUG: Secret esperado: '{secret}', Recibido: '{request.SecretCode}'");
-            if (string.IsNullOrWhiteSpace(request.SecretCode) || request.SecretCode != secret)
-            {
-                return BadRequest(new { message = "Código secreto de coordinador inválido." });
-            }
-        }
-
+        // Siempre crear el usuario como 'Padre' por defecto. Los roles elevados deben ser asignados por un ADMIN.
         var user = new User
         {
             Id = Guid.NewGuid(),
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = request.Role,
+            Role = "Padre",
             IsVerified = false,
-            VerificationToken = Guid.NewGuid().ToString()
+            VerificationToken = Guid.NewGuid().ToString(),
+            Username = request.Username,
+            Nombres = request.Nombres,
+            Apellidos = request.Apellidos,
+            Numero = request.Numero
         };
 
         await _context.Users.InsertOneAsync(user);
@@ -83,6 +79,42 @@ public class AuthController : ControllerBase
         {
             return Ok(new { message = "Registro ok, pero falló el correo.", verificationLink = link, error = ex.Message });
         }
+    }
+
+    [HttpGet("users")]
+    [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(Summary = "Listar usuarios (requiere ADMIN)", Description = "Listado de usuarios. Solo accesible por administradores.")]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        var list = await _context.Users.Find(_ => true).ToListAsync();
+        var result = list.Select(u => new { id = u.Id, email = u.Email, role = u.Role, username = u.Username, nombres = u.Nombres, apellidos = u.Apellidos, numero = u.Numero, isVerified = u.IsVerified });
+        return Ok(new { users = result });
+    }
+
+    [HttpPatch("users/{id}/role")]
+    [Authorize(Roles = "ADMIN")]
+    [SwaggerOperation(Summary = "Cambiar rol de usuario (ADMIN)", Description = "Permite a administradores cambiar el rol de un usuario entre Padre y Coordinador.")]
+    public async Task<IActionResult> ChangeUserRole(string id, [FromBody] ChangeRoleRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray();
+            return BadRequest(new { message = "Datos inválidos.", detalles = errores });
+        }
+
+        if (!Guid.TryParse(id, out var userId))
+            return BadRequest(new { message = "ID inválido" });
+
+        var allowed = new[] { "Padre", "Coordinador" };
+        if (!allowed.Contains(request.Role))
+            return BadRequest(new { message = "Rol inválido para asignar." });
+
+        var filter = Builders<User>.Filter.Eq(u => u.Id, userId);
+        var update = Builders<User>.Update.Set(u => u.Role, request.Role);
+        var res = await _context.Users.UpdateOneAsync(filter, update);
+        if (res.MatchedCount == 0) return NotFound(new { message = "Usuario no encontrado" });
+
+        return Ok(new { message = "Rol actualizado correctamente" });
     }
 
     [HttpGet("verify")]

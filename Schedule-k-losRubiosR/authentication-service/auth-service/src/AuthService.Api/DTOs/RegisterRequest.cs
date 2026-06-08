@@ -12,9 +12,15 @@ public class RegisterRequest
     [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres.")]
     public string Password { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "El rol es obligatorio.")]
-    [RegularExpression("^(Padre|Coordinador)$", ErrorMessage = "El rol debe ser 'Padre' o 'Coordinador'.")]
-    public string Role { get; set; } = string.Empty;
+    [Required(ErrorMessage = "El nombre de usuario es obligatorio.")]
+    public string Username { get; set; } = string.Empty;
 
-    public string? SecretCode { get; set; }
+    [Required(ErrorMessage = "Los nombres son obligatorios.")]
+    public string Nombres { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Los apellidos son obligatorios.")]
+    public string Apellidos { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El número de teléfono es obligatorio.")]
+    public string Numero { get; set; } = string.Empty;
 }

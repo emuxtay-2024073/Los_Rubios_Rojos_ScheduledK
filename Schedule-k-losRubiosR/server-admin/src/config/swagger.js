@@ -24,7 +24,7 @@ const options = {
     },
     servers: [
       {
-        url: "http://localhost:4000",
+        url: `http://localhost:${process.env.PORT || 4000}`,
         description: "Server Admin local"
       }
     ],
