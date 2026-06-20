@@ -45,12 +45,12 @@ export const LoginForm = ({ onForgot, onRegister }) => {
       {/* Email */}
       <div>
         <label htmlFor="email" className="mb-2 block text-base font-semibold text-[#1e2d4a]">
-          Email Address
+          Correo electrónico
         </label>
         <input
           type="email"
           id="email"
-          placeholder="Enter your email"
+          placeholder="Ingresa tu correo"
           className={inputClass}
           {...register('email', { required: 'Este campo es obligatorio' })}
         />
@@ -62,13 +62,13 @@ export const LoginForm = ({ onForgot, onRegister }) => {
       {/* Password */}
       <div>
         <label htmlFor="password" className="mb-2 block text-base font-semibold text-[#1e2d4a]">
-          Password
+          Contraseña
         </label>
         <div className="relative">
           <input
             type={showPassword ? 'text' : 'password'}
             id="password"
-            placeholder="Enter your password"
+            placeholder="Ingresa tu contraseña"
             className={`${inputClass} pr-12`}
             {...register('password', { required: 'Este campo es obligatorio' })}
           />
@@ -104,7 +104,7 @@ export const LoginForm = ({ onForgot, onRegister }) => {
           onClick={onForgot}
           className="text-base text-slate-500 hover:text-[#4a6fa5] transition"
         >
-          Forgot Password?
+          ¿Olvidaste tu contraseña?
         </button>
       </div>
 
@@ -132,7 +132,7 @@ export const LoginForm = ({ onForgot, onRegister }) => {
         disabled={loading}
         className="w-full rounded-full bg-[#4a6fa5] px-8 py-4 text-lg font-semibold text-white shadow-2xl shadow-[#4a6fa5]/25 transition hover:bg-[#3d5d8a] disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {loading ? 'Iniciando sesión...' : 'Login to Your Space'}
+        {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
       </button>
 
       {/* Register link */}
