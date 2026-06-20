@@ -32,101 +32,103 @@ export const AuthPage = () => {
   };
 
   return (
-    /* Full-screen wrapper — sin scroll, ocupa todo el viewport */
-    <div className="h-screen w-screen flex overflow-hidden bg-[#dce3ea]">
+    <div className="min-h-screen bg-[#dce3ea] px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-[1460px] overflow-hidden rounded-[2rem] bg-[#fbf6ec] shadow-[0_28px_80px_rgba(30,45,74,0.12)] sm:min-h-[calc(100vh-3rem)]">
 
-      {/* ══════════════ LEFT PANEL ══════════════ */}
-      <div
-        className="hidden md:flex w-[48%] flex-col relative overflow-hidden rounded-[1.6rem] justify-between px-6 py-6 shadow-lg"
-        style={{
-          backgroundImage: `url(${bgImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center top',
-        }}
-      >
-        {/* Soft vignette at bottom so the tagline card stands out */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#1e2d4a]/40 pointer-events-none" />
-
-        {/* ── Logo top-left ── */}
-        <div className="relative z-10 flex items-center gap-3 px-8 pt-6">
-          <img src={logo} alt="Schedule-K" className="h-9 w-auto" />
-          <span className="text-[#1e2d4a] font-extrabold text-sm tracking-[0.18em] drop-shadow-sm">
-            SCHEDULE-K
-          </span>
-        </div>
-
-        {/* ── Spacer ── */}
-        <div className="relative z-10 flex-1" />
-
-        {/* ── Tagline card — glassmorphism strip at the bottom ── */}
+        {/* ══════════════ LEFT PANEL ══════════════ */}
         <div
-          className="relative z-10 mx-8 mb-12 rounded-[2rem] px-12 py-14 flex items-center gap-6 h-[260px]"
+          className="relative hidden w-[46%] flex-col justify-between overflow-hidden rounded-l-[2rem] px-6 py-6 lg:flex xl:w-[48%]"
           style={{
-            background: 'rgba(18, 28, 52, 0.60)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.08)',
+            backgroundImage: `url(${bgImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center top',
           }}
         >
-          {/* Arrow button */}
-          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-white/18 hover:bg-white/28 transition flex items-center justify-center cursor-pointer">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#1e2d4a]/40 pointer-events-none" />
+
+          <div className="relative z-10 flex items-center gap-3 px-8 pt-6">
+            <img src={logo} alt="Schedule-K" className="h-9 w-auto" />
+            <span className="text-[#1e2d4a] font-extrabold text-sm tracking-[0.18em] drop-shadow-sm">
+              RUBIOS ROJOS
+            </span>
           </div>
-          <div className="flex-1 relative pr-6">
-            <p className="text-[11px] uppercase tracking-[0.28em] text-white/70 mb-1">
-              Your Digital Workspace
-            </p>
-            <p className="text-[2.8rem] font-extrabold leading-tight text-white">
-              The ultimate tool
-            </p>
-            <p className="text-[2.8rem] font-extrabold leading-tight text-[#cfe8fb] mt-1">
-              For coordination
-            </p>
 
-            {/* penguin inside card, absolutely positioned to the right and slightly lifted */}
-            <img src={heroImage} alt="penguin" className="absolute right-6 bottom-6 w-[34%] max-w-[200px] object-contain drop-shadow-2xl -translate-y-4" />
-          </div>
-        </div>
-      </div>
+          <div className="relative z-10 flex-1" />
 
-      {/* ══════════════ RIGHT PANEL ══════════════ */}
-      <div className={`flex-1 bg-[#fbf6ec] flex ${view === 'login' || view === 'forgot' ? 'items-center' : 'items-start'} justify-center px-12 py-12 overflow-y-auto`}>
-        <div className="w-full max-w-[36rem]">
+          <div
+            className="relative z-10 mx-6 mb-8 flex h-[250px] items-center gap-6 rounded-[2rem] px-10 py-12 xl:mx-8 xl:mb-12 xl:px-12"
+            style={{
+              background: 'rgba(18, 28, 52, 0.60)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-white/18 transition hover:bg-white/28">
+              <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <div className="relative flex-1 pr-28 xl:pr-32">
+              <p className="mb-2 text-[11px] uppercase tracking-[0.28em] text-white/70">
+                Tu espacio digital
+              </p>
+              <p className="text-[2.4rem] font-extrabold leading-tight text-white xl:text-[2.8rem]">
+                Seguro,
+              </p>
+              <p className="mt-1 text-[2.4rem] font-extrabold leading-tight text-[#cfe8fb] xl:text-[2.8rem]">
+                Fácil y
+              </p>
+              <p className="mt-1 text-[2.4rem] font-extrabold leading-tight text-white xl:text-[2.8rem]">
+                Rápido
+              </p>
 
-          {view === 'forgot' ? (
-            <ForgotPassword onSwitch={() => switchView('login')} />
-          ) : view === 'register' ? (
-            <RegisterForm onLogin={() => switchView('login')} />
-          ) : (
-            <>
-              <div className="mb-8">
-                <h2 className="text-[3.6rem] font-black text-[#1e2d4a] leading-tight mb-2">
-                  Welcome Back!
-                </h2>
-                <p className="text-lg text-slate-400 leading-relaxed">
-                  Welcome to our SCHEDULE-K, the best experience for{' '}
-                  <span className="font-semibold text-slate-500">COORDINATOR/PARENT</span>
-                </p>
-              </div>
-              <LoginForm
-                onForgot={() => switchView('forgot')}
-                onRegister={() => switchView('register')}
+              <img
+                src={heroImage}
+                alt="penguin"
+                className="absolute bottom-2 right-0 w-[34%] max-w-[190px] object-contain drop-shadow-2xl xl:max-w-[205px]"
               />
-            </>
-          )}
-
-          {/* Footer divider */}
-          <div className="mt-8 flex items-center gap-3">
-            <div className="flex-1 h-px bg-slate-200" />
-            <span className="text-[10px] text-slate-400 tracking-[0.22em] font-semibold">SCHEDULED-K</span>
-            <div className="flex-1 h-px bg-slate-200" />
+            </div>
           </div>
+        </div>
 
+        {/* ══════════════ RIGHT PANEL ══════════════ */}
+        <div className={`flex-1 bg-[#fbf6ec] flex ${view === 'login' || view === 'forgot' ? 'items-center' : 'items-start'} justify-center overflow-y-auto px-6 py-10 sm:px-10 lg:px-12 xl:px-16`}>
+          <div className="w-full max-w-[34rem] xl:max-w-[35rem]">
+
+            {view === 'forgot' ? (
+              <ForgotPassword onSwitch={() => switchView('login')} />
+            ) : view === 'register' ? (
+              <RegisterForm onLogin={() => switchView('login')} />
+            ) : (
+              <>
+                <div className="mb-8">
+                  <h2 className="mb-2 text-[3rem] font-black leading-tight text-[#1e2d4a] xl:text-[3.6rem]">
+                    ¡Bienvenido de nuevo!
+                  </h2>
+                  <p className="text-base leading-relaxed text-slate-400 xl:text-lg">
+                    Bienvenido a nuestro sistema de gestión de citas, la mejor experiencia para{' '}
+                    <span className="font-semibold text-slate-500">COORDINADOR, PADRE O TUTOR</span>
+                  </p>
+                </div>
+                <LoginForm
+                  onForgot={() => switchView('forgot')}
+                  onRegister={() => switchView('register')}
+                />
+              </>
+            )}
+
+            <div className="mt-8 flex items-center gap-3">
+              <div className="h-px flex-1 bg-slate-200" />
+              <span className="text-[10px] font-semibold tracking-[0.22em] text-slate-400">
+                RUBIOS ROJOS CORP
+              </span>
+              <div className="h-px flex-1 bg-slate-200" />
+            </div>
+
+          </div>
         </div>
       </div>
-
     </div>
   );
 };

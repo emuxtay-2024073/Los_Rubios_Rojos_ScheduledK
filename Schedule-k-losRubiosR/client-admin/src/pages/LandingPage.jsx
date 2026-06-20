@@ -10,7 +10,7 @@ export const LandingPage = () => {
           <img src={logo} alt='Los Rubios Rojos' className='h-24 w-auto' />
           <div>
             <h1 className='text-4xl font-black tracking-tight text-gray-900 sm:text-5xl'>Los Rubios Rojos</h1>
-            <p className='mt-4 text-gray-600 text-lg sm:text-xl'>Bienvenido al sistema de reserva y gestión del restaurante.</p>
+            <p className='mt-4 text-gray-600 text-lg sm:text-xl'>Bienvenido al sistema de reserva y gestión de citas.</p>
           </div>
           <div className='space-y-4'>
             <p className='text-sm text-gray-500'>
@@ -19,7 +19,7 @@ export const LandingPage = () => {
             <StartButton />
           </div>
           <p className='text-sm text-gray-500'>
-            Si eres administrador, accederás al panel de administración; si eres cliente, te llevaremos a tu vista cliente.
+            Si eres coordinador, accederás a la vista de coordinador; si eres padre o tutor, te llevaremos a tu vista de tutor.
           </p>
         </div>
       </div>

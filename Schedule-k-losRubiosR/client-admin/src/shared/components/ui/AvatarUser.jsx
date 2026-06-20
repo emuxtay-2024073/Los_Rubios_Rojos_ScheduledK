@@ -1,5 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import {
+  ArrowRightOnRectangleIcon,
+  ChevronDownIcon,
+  UserCircleIcon,
+} from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../../features/auth/store/authStore.js';
 import defaultAvatarImg from '../../../assets/img/avatarDefault-1749508519496.png';
 
@@ -16,17 +21,16 @@ export const AvatarUser = () => {
   const { user, logout } = useAuthStore();
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
-
   const navigate = useNavigate();
-
-  const toggleMenu = () => setOpen((prev) => !prev);
+  const isSuperAdmin = user?.role?.toUpperCase() === 'SUPER_ADMIN';
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpen(false);
       }
-    }
+    };
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -45,48 +49,62 @@ export const AvatarUser = () => {
 
   return (
     <div className='relative' ref={dropdownRef}>
-      <img
-        onClick={toggleMenu}
-        src={avatarSrc}
-        alt={user?.username}
-        className='h-10 w-10 cursor-pointer rounded-full border-2 border-[#F59E0B]/70 object-cover shadow-[0_8px_20px_rgba(124,45,18,0.16)] transition hover:scale-105'
-        onError={(e) => {
-          e.target.onerror = null;
-          e.target.src = defaultAvatarImg;
-        }}
-      />
+      <button
+        type='button'
+        onClick={() => setOpen((value) => !value)}
+        className='admin-profile-trigger'
+        aria-haspopup='menu'
+        aria-expanded={open}
+      >
+        <img
+          src={avatarSrc}
+          alt={user?.username || 'Usuario'}
+          className='h-11 w-11 rounded-full object-cover ring-2 ring-[rgba(86,72,231,0.14)]'
+          onError={(event) => {
+            event.currentTarget.onerror = null;
+            event.currentTarget.src = defaultAvatarImg;
+          }}
+        />
+        <span className='hidden min-w-0 text-left lg:block'>
+          <span className='block truncate text-sm font-bold text-[#202020]'>
+            {user?.username || 'Panel institucional'}
+          </span>
+          <span className='block truncate text-xs font-semibold text-[#5E5E5E]'>
+            {isSuperAdmin ? 'Superadministrador' : 'Administrador'}
+          </span>
+        </span>
+        <ChevronDownIcon className='hidden h-4 w-4 text-[#5E5E5E] lg:block' />
+      </button>
 
       {open && (
-        <div className='animate-fadeIn absolute right-0 z-50 mt-3 w-56 overflow-hidden rounded-2xl border border-[#7C2D12]/10 bg-white shadow-2xl'>
-          <div className='border-b border-[#7C2D12]/10 bg-[#FFF7ED] px-4 py-3'>
-            <p className='font-extrabold text-gray-800'>{user?.username}</p>
-            <p className='text-sm text-gray-500 truncate'>{user?.email}</p>
+        <div className='animate-fadeIn absolute right-0 z-50 mt-3 w-72 overflow-hidden rounded-[1.5rem] border border-[rgba(86,72,231,0.12)] bg-white shadow-[0_30px_70px_rgba(0,0,0,0.12)]'>
+          <div className='border-b border-[rgba(86,72,231,0.08)] bg-[linear-gradient(135deg,rgba(221,245,222,0.9),rgba(255,255,255,0.98),rgba(200,241,204,0.68))] px-5 py-4'>
+            <p className='truncate text-base font-extrabold text-[#202020]'>{user?.username}</p>
+            <p className='truncate text-sm text-[#5E5E5E]'>{user?.email}</p>
           </div>
 
-          <ul className='p-2 text-sm font-semibold text-gray-700'>
-            <li>
-              <Link to='/dashboard' className='block w-full rounded-xl p-2 hover:bg-[#FFF7ED] hover:text-[#DC2626]'>
-                Dashboard
-              </Link>
-            </li>
+          <div className='p-3'>
+            <Link to='/dashboard' className='admin-dropdown-link'>
+              <UserCircleIcon className='h-5 w-5' />
+              Mi panel
+            </Link>
 
-            {user?.role?.toUpperCase() === 'SUPER_ADMIN' && (
-              <li>
-                <Link to='/dashboard/users' className='block w-full rounded-xl p-2 hover:bg-[#FFF7ED] hover:text-[#DC2626]'>
-                  Usuarios
-                </Link>
-              </li>
+            {isSuperAdmin && (
+              <Link to='/dashboard/users' className='admin-dropdown-link'>
+                <UserCircleIcon className='h-5 w-5' />
+                Gestión de usuarios
+              </Link>
             )}
 
-            <li>
-              <button
-                onClick={handleLogout}
-                className='block w-full rounded-xl p-2 text-left text-red-600 hover:bg-red-50'
-              >
-                Cerrar sesión
-              </button>
-            </li>
-          </ul>
+            <button
+              type='button'
+              onClick={handleLogout}
+              className='admin-dropdown-link text-[#4438D8]'
+            >
+              <ArrowRightOnRectangleIcon className='h-5 w-5' />
+              Cerrar sesión
+            </button>
+          </div>
         </div>
       )}
     </div>
