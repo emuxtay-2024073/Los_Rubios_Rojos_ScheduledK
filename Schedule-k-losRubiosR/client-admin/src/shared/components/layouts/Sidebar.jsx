@@ -3,15 +3,10 @@ import { useAuthStore } from '../../../features/auth/store/authStore.js';
 import { useState } from 'react';
 import {
   Bars3Icon,
-  BuildingStorefrontIcon,
   CalendarDaysIcon,
-  ChatBubbleLeftRightIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
-  ClipboardDocumentListIcon,
-  RectangleGroupIcon,
   Squares2X2Icon,
-  TableCellsIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
@@ -23,12 +18,7 @@ export const Sidebar = () => {
 
   const items = [
     { label: 'Dashboard', to: '/dashboard', icon: Squares2X2Icon },
-    { label: 'Restaurantes', to: '/dashboard/restaurants', icon: BuildingStorefrontIcon },
-    { label: 'Mesas', to: '/dashboard/tables', icon: TableCellsIcon },
-    { label: 'Menús', to: '/dashboard/menus', icon: RectangleGroupIcon },
-    { label: 'Órdenes', to: '/dashboard/orders', icon: ClipboardDocumentListIcon },
     { label: 'Reservaciones', to: '/dashboard/reservations', icon: CalendarDaysIcon },
-    { label: 'Reseñas', to: '/dashboard/reviews', icon: ChatBubbleLeftRightIcon },
     ...(isSuperAdmin ? [{ label: 'Usuarios', to: '/dashboard/users', icon: UserGroupIcon }] : []),
   ];
 
@@ -45,7 +35,7 @@ export const Sidebar = () => {
     >
       <div className='flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4 md:px-5'>
         <div className={`hidden min-w-0 md:block ${collapsed ? 'md:hidden' : ''}`}>
-          <p className='text-xs font-black uppercase tracking-[0.16em] text-[#f59e0b]'>Control gastronómico</p>
+          <p className='text-xs font-black uppercase tracking-[0.16em] text-[#f59e0b]'>Schedule-K</p>
           <h2 className='truncate text-lg font-black text-white'>Los Rubios Rojos</h2>
         </div>
         <Bars3Icon className='h-6 w-6 text-[#f59e0b] md:hidden' />

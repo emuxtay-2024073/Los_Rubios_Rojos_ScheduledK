@@ -15,9 +15,8 @@ import {
 import { useAuthStore } from '../features/auth/store/authStore.js';
 import { useUserManagementStore } from '../features/auth/store/useUserManagementStore.js';
 import {
-  getOrders,
-  getReservationsForRestaurant,
-  getRestaurants,
+  getAppointments,
+  getAppointmentHistory,
 } from '../services/adminApi.js';
 import heroPenguin from '../assets/img/LOGIN_IMG.png';
 
@@ -161,9 +160,8 @@ export const Dashboard = () => {
   const isSuperAdmin = user?.role?.toUpperCase() === 'SUPER_ADMIN';
   const { users, getAllUsers } = useUserManagementStore();
 
-  const [restaurants, setRestaurants] = useState([]);
-  const [reservations, setReservations] = useState([]);
-  const [orders, setOrders] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [appointmentHistory, setAppointmentHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -173,45 +171,28 @@ export const Dashboard = () => {
       setLoading(true);
 
       try {
-        const [restaurantsResult, ordersResult] = await Promise.allSettled([
-          getRestaurants(),
-          getOrders(),
+        const [appointmentsResult, historyResult] = await Promise.allSettled([
+          getAppointments(),
+          getAppointmentHistory(),
         ]);
 
-        const restaurantsList =
-          restaurantsResult.status === 'fulfilled'
-            ? Array.isArray(restaurantsResult.value)
-              ? restaurantsResult.value
-              : restaurantsResult.value?.restaurants || []
+        const appointmentsList =
+          appointmentsResult.status === 'fulfilled'
+            ? Array.isArray(appointmentsResult.value)
+              ? appointmentsResult.value
+              : appointmentsResult.value?.appointments || []
             : [];
 
-        const reservationsResult = await Promise.allSettled(
-          restaurantsList.map(async (restaurant) => {
-            const items = await getReservationsForRestaurant(restaurant._id);
-            const reservationItems = Array.isArray(items) ? items : [];
-
-            return reservationItems.map((reservation) => ({
-              ...reservation,
-              __campusName: restaurant.name,
-              __coordinatorName: restaurant.manager || restaurant.name || 'Coordinación general',
-            }));
-          }),
-        );
-
-        const reservationList = reservationsResult.flatMap((result) =>
-          result.status === 'fulfilled' ? result.value : [],
-        );
+        const historyList =
+          historyResult.status === 'fulfilled'
+            ? Array.isArray(historyResult.value)
+              ? historyResult.value
+              : historyResult.value?.history || []
+            : [];
 
         if (!cancelled) {
-          setRestaurants(restaurantsList);
-          setReservations(reservationList);
-          setOrders(
-            ordersResult.status === 'fulfilled'
-              ? Array.isArray(ordersResult.value)
-                ? ordersResult.value
-                : ordersResult.value?.orders || []
-              : [],
-          );
+          setAppointments(appointmentsList);
+          setAppointmentHistory(historyList);
         }
       } catch (error) {
         console.error(error);
@@ -262,60 +243,52 @@ export const Dashboard = () => {
       Boolean(item.isVerified ?? item.verified ?? item.emailConfirmed),
     );
 
-    const reservationsToday = reservations.filter((item) =>
-      isSameDay(item.reservationDate || item.createdAt, today),
+    const appointmentsToday = appointments.filter((item) =>
+      isSameDay(item.appointmentDate || item.createdAt, today),
     );
 
-    const completedMonthly = reservations.filter((item) => {
+    const completedMonthly = appointments.filter((item) => {
       const badge = getAppointmentBadge(item.status);
       return (
-        isSameMonth(item.reservationDate || item.createdAt, today) &&
+        isSameMonth(item.appointmentDate || item.createdAt, today) &&
         ['Confirmada', 'Completada'].includes(badge.label)
       );
     });
 
     const uniqueFamilies = new Set(
-      reservations.map((item) => item.customerEmail || item.customerName).filter(Boolean),
-    );
-    const uniqueCoordinators = new Set(
-      reservations.map((item) => item.__coordinatorName).filter(Boolean),
+      appointments.map((item) => item.customerEmail || item.customerName).filter(Boolean),
     );
 
-    const confirmationRate = reservations.length
+    const confirmationRate = appointments.length
       ? Math.round(
-          (reservations.filter((item) => {
+          (appointments.filter((item) => {
             const badge = getAppointmentBadge(item.status);
             return ['Confirmada', 'Completada'].includes(badge.label);
           }).length /
-            reservations.length) *
+            appointments.length) *
             100,
         )
       : 0;
 
-    const monthlyOrders = orders.filter((item) =>
-      isSameMonth(item.createdAt || item.updatedAt, today),
-    ).length;
-
-    const recentAppointments = [...reservations]
+    const recentAppointments = [...appointments]
       .sort((a, b) => {
-        const firstDate = new Date(a.reservationDate || a.createdAt || 0).getTime();
-        const secondDate = new Date(b.reservationDate || b.createdAt || 0).getTime();
+        const firstDate = new Date(a.appointmentDate || a.createdAt || 0).getTime();
+        const secondDate = new Date(b.appointmentDate || b.createdAt || 0).getTime();
         return firstDate - secondDate;
       })
       .slice(0, 6);
 
     return {
-      scheduledToday: reservationsToday.length,
+      scheduledToday: appointmentsToday.length,
       parentCount: parentUsers.length || uniqueFamilies.size,
-      teacherCount: coordinatorUsers.length || uniqueCoordinators.size || restaurants.length,
+      teacherCount: coordinatorUsers.length,
       monthlyCompleted: completedMonthly.length,
       verifiedCount: verifiedUsers.length,
       totalUsers: users.length,
       confirmationRate,
-      monthlyOrders,
       recentAppointments,
     };
-  }, [orders, reservations, restaurants.length, users]);
+  }, [appointments, users]);
 
   const quickActions = useMemo(
     () => [
@@ -342,18 +315,6 @@ export const Dashboard = () => {
         description: 'Visualiza responsables académicos y su disponibilidad.',
         to: isSuperAdmin ? '/dashboard/users?role=COORDINADOR' : '/dashboard#docentes',
         icon: AcademicCapIcon,
-      },
-      {
-        title: 'Reportes',
-        description: 'Revisa tendencias, cumplimiento y actividad institucional.',
-        to: '/dashboard/reviews',
-        icon: ChartBarSquareIcon,
-      },
-      {
-        title: 'Configuración',
-        description: 'Ajusta sedes, catálogos y parámetros operativos.',
-        to: '/dashboard/restaurants',
-        icon: Cog6ToothIcon,
       },
     ],
     [isSuperAdmin],
@@ -781,21 +742,6 @@ export const Dashboard = () => {
                 </div>
               </Link>
 
-              <Link
-                id='configuracion'
-                to='/dashboard/restaurants'
-                className='admin-mini-panel'
-              >
-                <div className='admin-mini-panel__icon'>
-                  <Cog6ToothIcon className='h-6 w-6' />
-                </div>
-                <div>
-                  <h3 className='text-lg font-extrabold text-[#202020]'>Configuración</h3>
-                  <p className='mt-2 text-sm leading-6 text-[#5E5E5E]'>
-                    Ajustes de sedes, catálogos y módulos operativos.
-                  </p>
-                </div>
-              </Link>
             </div>
           </div>
         </div>

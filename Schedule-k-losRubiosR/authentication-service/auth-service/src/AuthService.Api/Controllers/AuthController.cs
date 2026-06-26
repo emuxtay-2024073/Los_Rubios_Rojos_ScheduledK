@@ -56,7 +56,7 @@ public class AuthController : ControllerBase
             Id = Guid.NewGuid(),
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = "Padre",
+            Role = "ADMIN",
             IsVerified = false,
             VerificationToken = Guid.NewGuid().ToString(),
             Username = request.Username,

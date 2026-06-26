@@ -49,14 +49,6 @@ const getActiveNavId = ({ pathname, search, hash }) => {
     return 'usuarios';
   }
 
-  if (pathname.startsWith('/dashboard/restaurants') || pathname.startsWith('/dashboard/menus')) {
-    return 'configuracion';
-  }
-
-  if (pathname.startsWith('/dashboard/reviews') || pathname.startsWith('/dashboard/orders')) {
-    return 'reportes';
-  }
-
   if (pathname.startsWith('/dashboard/reservations')) {
     return 'citas';
   }
