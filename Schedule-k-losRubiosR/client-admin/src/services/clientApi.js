@@ -1,1 +1,1 @@
-export { getRestaurants, getMenuItems, getMenuItemsByRestaurant } from './adminApi.js';
+export { getAppointments } from './adminApi.js';

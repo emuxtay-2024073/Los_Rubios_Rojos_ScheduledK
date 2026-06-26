@@ -4,10 +4,7 @@ import imgLogo from '../../../assets/img/logo_scheduled_img.png';
 import { useAuthStore } from '../../../features/auth/store/authStore.js';
 
 const navItems = [
-  { label: 'Restaurantes', to: '/cliente/restaurants' },
   { label: 'Reservas', to: '/cliente/reservations' },
-  { label: 'Reseñas', to: '/cliente/reviews' },
-  { label: 'Ordenes', to: '/cliente/orders' },
 ];
 
 export const ClientNavbar = () => {
