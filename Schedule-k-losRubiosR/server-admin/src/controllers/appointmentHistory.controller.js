@@ -82,6 +82,16 @@ export const createHistory = async (req, res, next) => {
  *       404:
  *         description: No hay registros de historial para esta cita
  */
+export const getAllHistory = async (req, res, next) => {
+  try {
+    const history = await historyService.getAllHistory();
+    res.json(history);
+  } catch (error) {
+    logger.error(error.message);
+    next(error);
+  }
+};
+
 export const getHistory = async (req, res, next) => {
   try {
     if (!req.params.id) {

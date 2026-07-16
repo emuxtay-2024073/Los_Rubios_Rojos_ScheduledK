@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../features/auth/store/authStore.js';
 import logo from '../assets/img/logo_scheduled_img.png';
+import { getRoleHomePath } from '../shared/utils/roleViews.js';
 
 export const LandingPage = () => {
   return (
@@ -34,9 +35,8 @@ const StartButton = () => {
 
   const handleStart = () => {
     if (isAuthenticated) {
-      const role = user?.role?.toUpperCase();
-      if (role?.includes('ADMIN')) navigate('/dashboard');
-      else navigate('/cliente');
+      const role = user?.role;
+      navigate(getRoleHomePath(role));
     } else {
       navigate('/login');
     }

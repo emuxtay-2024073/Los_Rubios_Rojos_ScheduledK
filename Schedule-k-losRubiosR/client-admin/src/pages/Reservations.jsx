@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getAppointments } from '../services/adminApi.js';
+import { getAppointments, createAppointment } from '../services/adminApi.js';
 import { Spinner } from '../features/auth/components/Spinner.jsx';
-import { showError } from '../shared/utils/toast.js';
+import { showError, showSuccess } from '../shared/utils/toast.js';
+import { ClientButton } from '../shared/components/ui/ClientButton.jsx';
+import { ClientInput } from '../shared/components/ui/ClientInput.jsx';
+import { ClientModal } from '../shared/components/ui/ClientModal.jsx';
 
 const formatDate = (value) => {
   if (!value) return 'Sin fecha';
@@ -12,6 +15,19 @@ export const Reservations = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [createOpen, setCreateOpen] = useState(false);
+  const [form, setForm] = useState({
+    title: '',
+    customerName: '',
+    customerEmail: '',
+    customerPhone: '',
+    appointmentDate: '',
+    appointmentTime: '',
+    notes: '',
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const loadAppointments = async () => {
     try {
@@ -44,6 +60,63 @@ export const Reservations = () => {
     [appointments, search],
   );
 
+  const appointmentDateTime = `${form.appointmentDate || ''}T${form.appointmentTime || ''}`;
+  const appointmentDate = appointmentDateTime ? new Date(appointmentDateTime) : null;
+  const isDateValid = appointmentDate && !Number.isNaN(appointmentDate.getTime()) && appointmentDate > new Date();
+
+  const validateForm = () => {
+    const errors = {};
+
+    if (!form.title.trim()) errors.title = 'El título es obligatorio.';
+    if (!form.customerName.trim()) errors.customerName = 'El nombre es obligatorio.';
+    if (!form.customerEmail.trim()) errors.customerEmail = 'El correo electrónico es obligatorio.';
+    if (!form.customerPhone.trim()) errors.customerPhone = 'El teléfono es obligatorio.';
+    if (!form.appointmentDate) errors.appointmentDate = 'Selecciona una fecha.';
+    if (!form.appointmentTime) errors.appointmentTime = 'Selecciona una hora.';
+    if (!isDateValid) errors.appointmentDate = 'La fecha y hora deben ser futuras.';
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCreateSubmit = async (event) => {
+    event.preventDefault();
+    if (!validateForm()) {
+      showError('Revisa los campos del formulario antes de enviar.');
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await createAppointment({
+        title: form.title.trim(),
+        customerName: form.customerName.trim(),
+        customerEmail: form.customerEmail.trim(),
+        customerPhone: form.customerPhone.trim(),
+        appointmentDate: appointmentDateTime,
+        notes: form.notes.trim(),
+      });
+      setSubmitted(true);
+      showSuccess('Cita creada correctamente');
+      setForm({
+        title: '',
+        customerName: '',
+        customerEmail: '',
+        customerPhone: '',
+        appointmentDate: '',
+        appointmentTime: '',
+        notes: '',
+      });
+      setFormErrors({});
+      loadAppointments();
+    } catch (error) {
+      const apiMessage = error?.response?.data?.message || error?.message || 'No se pudo crear la cita';
+      showError(apiMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <Spinner />;
 
   return (
@@ -54,6 +127,7 @@ export const Reservations = () => {
           <h1 className='admin-title mt-2'>Citas</h1>
           <p className='admin-subtitle mt-2 text-sm'>Gestiona citas, horarios y estado de cada reservación.</p>
         </div>
+        <ClientButton onClick={() => setCreateOpen(true)}>Agregar cita</ClientButton>
       </div>
 
       <div className='admin-panel overflow-hidden'>
@@ -112,6 +186,90 @@ export const Reservations = () => {
           </table>
         </div>
       </div>
+
+      <ClientModal open={createOpen} title='Agregar nueva cita' onClose={() => setCreateOpen(false)}>
+        <div className='mx-auto w-full max-w-xl rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm'>
+          <form onSubmit={handleCreateSubmit} className='grid gap-5 sm:grid-cols-2'>
+            <div className='sm:col-span-2'>
+              <ClientInput
+                label='Título de la cita'
+                value={form.title}
+                onChange={(event) => setForm({ ...form, title: event.target.value })}
+                placeholder='Ej: Reunión con familia'
+              />
+              {formErrors.title && <p className='mt-2 text-sm text-rose-600'>{formErrors.title}</p>}
+            </div>
+
+          <div>
+            <ClientInput
+              label='Nombre completo'
+              value={form.customerName}
+              onChange={(event) => setForm({ ...form, customerName: event.target.value })}
+            />
+            {formErrors.customerName && <p className='mt-2 text-sm text-rose-600'>{formErrors.customerName}</p>}
+          </div>
+
+          <div>
+            <ClientInput
+              label='Correo electrónico'
+              type='email'
+              value={form.customerEmail}
+              onChange={(event) => setForm({ ...form, customerEmail: event.target.value })}
+            />
+            {formErrors.customerEmail && <p className='mt-2 text-sm text-rose-600'>{formErrors.customerEmail}</p>}
+          </div>
+
+          <div>
+            <ClientInput
+              label='Teléfono'
+              value={form.customerPhone}
+              onChange={(event) => setForm({ ...form, customerPhone: event.target.value })}
+            />
+            {formErrors.customerPhone && <p className='mt-2 text-sm text-rose-600'>{formErrors.customerPhone}</p>}
+          </div>
+
+          <div>
+            <ClientInput
+              label='Fecha'
+              type='date'
+              value={form.appointmentDate}
+              onChange={(event) => setForm({ ...form, appointmentDate: event.target.value })}
+            />
+            {formErrors.appointmentDate && <p className='mt-2 text-sm text-rose-600'>{formErrors.appointmentDate}</p>}
+          </div>
+
+          <div>
+            <ClientInput
+              label='Hora'
+              type='time'
+              value={form.appointmentTime}
+              onChange={(event) => setForm({ ...form, appointmentTime: event.target.value })}
+            />
+            {formErrors.appointmentTime && <p className='mt-2 text-sm text-rose-600'>{formErrors.appointmentTime}</p>}
+          </div>
+
+          <label className='sm:col-span-2 block space-y-1.5'>
+            <span className='text-sm font-medium text-gray-900'>Notas</span>
+            <textarea
+              rows='4'
+              value={form.notes}
+              onChange={(event) => setForm({ ...form, notes: event.target.value })}
+              className='w-full rounded-2xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-main-blue focus:ring-2 focus:ring-main-blue/20'
+              placeholder='Detalles adicionales sobre la cita'
+            />
+          </label>
+
+          <div className='sm:col-span-2 flex flex-col gap-3 sm:flex-row sm:justify-end'>
+            <ClientButton type='button' variant='secondary' onClick={() => setCreateOpen(false)}>
+              Cancelar
+            </ClientButton>
+            <ClientButton type='submit' disabled={saving} className='disabled:cursor-not-allowed disabled:opacity-60'>
+              {saving ? 'Guardando...' : 'Guardar cita'}
+            </ClientButton>
+          </div>
+        </form>
+      </div>
+      </ClientModal>
     </div>
   );
 };

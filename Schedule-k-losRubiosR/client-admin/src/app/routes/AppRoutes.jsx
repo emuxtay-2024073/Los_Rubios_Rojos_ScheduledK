@@ -13,6 +13,13 @@ import { LandingPage } from '../../pages/LandingPage.jsx';
 import { ClientReservationsPage } from '../../pages/client/ClientReservationsPage.jsx';
 import { ClientLayout } from '../layouts/ClientLayout.jsx';
 import { AdminPage } from '../../pages/admin/AdminPage.jsx';
+import { ParentLayout } from '../../pages/parent/ParentLayout.jsx';
+import { ParentPage } from '../../pages/parent/ParentPage.jsx';
+import { CoordinatorLayout } from '../../pages/coordinator/CoordinatorLayout.jsx';
+import { CoordinatorPage } from '../../pages/coordinator/CoordinatorPage.jsx';
+import { CoordinatorParentsPage } from '../../pages/coordinator/CoordinatorParentsPage.jsx';
+import { CoordinatorCalendarPage } from '../../pages/coordinator/CoordinatorCalendarPage.jsx';
+import { CoordinatorMessagesPage } from '../../pages/coordinator/CoordinatorMessagesPage.jsx';
 
 export const AppRoutes = () => {
   return (
@@ -24,6 +31,38 @@ export const AppRoutes = () => {
         <Route index element={<ClientPage />} />
         <Route path='reservations' element={<ClientReservationsPage />} />
       </Route>
+
+      <Route
+        path='/padre'
+        element={
+          <ProtectedRoutes>
+            <RoleGuard allowedRoles={['PADRE']}>
+              <ParentLayout />
+            </RoleGuard>
+          </ProtectedRoutes>
+        }
+      >
+        <Route index element={<ParentPage />} />
+        <Route path='reservations' element={<ClientReservationsPage />} />
+      </Route>
+
+      <Route
+        path='/coordinador'
+        element={
+          <ProtectedRoutes>
+            <RoleGuard allowedRoles={['COORDINADOR']}>
+              <CoordinatorLayout />
+            </RoleGuard>
+          </ProtectedRoutes>
+        }
+      >
+        <Route index element={<CoordinatorPage />} />
+        <Route path='parents' element={<CoordinatorParentsPage />} />
+        <Route path='citas' element={<Reservations />} />
+        <Route path='messages' element={<CoordinatorMessagesPage />} />
+        <Route path='calendar' element={<CoordinatorCalendarPage />} />
+      </Route>
+
       <Route path='/login' element={<AuthPage />} />
       <Route path='/verify-email' element={<VerifyEmailPage />} />
       <Route path='/unauthorized' element={<UnauthorizedPage />} />

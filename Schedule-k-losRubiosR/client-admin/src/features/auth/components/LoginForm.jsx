@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore.js';
+import { getRoleHomePath } from '../../../shared/utils/roleViews.js';
 
 export const LoginForm = ({ onForgot, onRegister }) => {
   const navigate = useNavigate();
@@ -25,9 +26,9 @@ export const LoginForm = ({ onForgot, onRegister }) => {
 
     if (res.success) {
       const role = res.role || user?.role || 'CLIENTE';
-      const isAdmin = role?.toUpperCase()?.includes('ADMIN');
-      navigate(isAdmin ? '/dashboard' : '/cliente');
-      toast.success(`Bienvenido ${isAdmin ? 'administrador' : 'cliente'}!`, { duration: 3000 });
+      const homePath = getRoleHomePath(role);
+      navigate(homePath);
+      toast.success(`Bienvenido ${role}!`, { duration: 3000 });
       return;
     }
 
