@@ -99,6 +99,15 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("TestUserSeeder");
+    var context = services.GetRequiredService<MongoDbContext>();
+
+    await TestUserSeeder.SeedAsync(context, logger);
+}
+
 // CORS
 app.UseCors("AllowReactApp");
 

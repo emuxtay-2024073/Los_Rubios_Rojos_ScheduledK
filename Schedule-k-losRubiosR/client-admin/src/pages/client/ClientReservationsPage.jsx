@@ -81,26 +81,28 @@ export const ClientReservationsPage = () => {
   };
 
   return (
-    <div className='grid gap-8 lg:grid-cols-[1.1fr_0.9fr]'>
-      <section className='rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-xl sm:p-8'>
-        <p className='text-sm font-semibold uppercase tracking-[0.25em] text-main-blue'>Citas</p>
-        <h1 className='mt-1 text-3xl font-black text-gray-900'>Agenda tu cita</h1>
-        <p className='mt-2 text-gray-700'>
-          Programa una cita seleccionando fecha, hora y proporcionando tus datos de contacto.
-        </p>
+    <div className='mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8'>
+      <div className='grid gap-8 lg:grid-cols-[1.1fr_0.9fr]'>
+        <section className='rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-xl sm:p-8'>
+          <p className='text-sm font-semibold uppercase tracking-[0.25em] text-main-blue'>Citas</p>
+          <h1 className='mt-1 text-3xl font-black text-gray-900'>Agenda tu cita</h1>
+          <p className='mt-2 text-gray-700'>
+            Programa una cita seleccionando fecha, hora y proporcionando tus datos de contacto.
+          </p>
 
-        <form onSubmit={onSubmit} className='mt-8 grid gap-5 sm:grid-cols-2'>
-          <div className='sm:col-span-2'>
-            <ClientInput
-              label='Título de la cita'
-              value={form.title}
-              onChange={(event) => setForm({ ...form, title: event.target.value })}
-              placeholder='Ej: Reunión con coordinador'
-            />
-            {formErrors.title && <p className='mt-2 text-sm text-rose-600'>{formErrors.title}</p>}
-          </div>
+          <div className='mt-8 rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-sm'>
+            <form onSubmit={onSubmit} className='mx-auto w-full max-w-3xl grid gap-6 sm:grid-cols-2'>
+              <div className='sm:col-span-2'>
+                <ClientInput
+                  label='Título de la cita'
+                  value={form.title}
+                  onChange={(event) => setForm({ ...form, title: event.target.value })}
+                  placeholder='Ej: Reunión con coordinador'
+                />
+                {formErrors.title && <p className='mt-2 text-sm text-rose-600'>{formErrors.title}</p>}
+              </div>
 
-          <div>
+          <div className='space-y-1'>
             <ClientInput
               label='Nombre completo'
               value={form.customerName}
@@ -109,7 +111,7 @@ export const ClientReservationsPage = () => {
             {formErrors.customerName && <p className='mt-2 text-sm text-rose-600'>{formErrors.customerName}</p>}
           </div>
 
-          <div>
+          <div className='space-y-1'>
             <ClientInput
               label='Correo electrónico'
               type='email'
@@ -165,6 +167,7 @@ export const ClientReservationsPage = () => {
             </ClientButton>
           </div>
         </form>
+      </div>
       </section>
 
       <section className='space-y-5 rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-xl sm:p-8'>
@@ -185,11 +188,14 @@ export const ClientReservationsPage = () => {
       </section>
 
       <ClientModal open={submitted} title='Cita creada' onClose={() => setSubmitted(false)}>
-        <p className='text-gray-700'>Tu cita quedó registrada correctamente.</p>
-        <div className='mt-6 flex justify-end'>
-          <ClientButton onClick={() => setSubmitted(false)}>Entendido</ClientButton>
+        <div className='space-y-4'>
+          <p className='text-gray-700'>Tu cita quedó registrada correctamente.</p>
+          <div className='flex justify-end'>
+            <ClientButton onClick={() => setSubmitted(false)}>Entendido</ClientButton>
+          </div>
         </div>
       </ClientModal>
     </div>
+  </div>
   );
 };
