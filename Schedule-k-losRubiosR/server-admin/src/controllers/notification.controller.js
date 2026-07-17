@@ -65,7 +65,8 @@ class NotificationController {
             const notification = await NotificationService.createBroadcast(
                 title,
                 message,
-                req.user.id
+                req.user.id,
+                req.user.username || req.user.email || 'Coordinador'
             );
 
             res.status(201).json(notification);

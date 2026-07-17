@@ -25,6 +25,12 @@ const JWTMiddleware = (req, res, next) => {
 
     req.user = {
         id: decoded.id || decoded.userId || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'],
+        username:
+          decoded.unique_name ||
+          decoded.username ||
+          decoded.name ||
+          decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] ||
+          null,
         role: decoded.role || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'],
         email: decoded.email || decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress']
     };

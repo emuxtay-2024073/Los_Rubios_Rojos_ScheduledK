@@ -80,7 +80,7 @@ export const AppRoutes = () => {
         <Route path='admin-home' element={<AdminPage />} />
         <Route path='reservations' element={<Reservations />} />
         <Route path='users' element={
-          <RoleGuard allowedRoles={['SUPER_ADMIN']}>
+          <RoleGuard allowedRoles={['SUPER_ADMIN','ADMIN']}>
             <Users />
           </RoleGuard>
         } />

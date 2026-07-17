@@ -32,6 +32,12 @@ const appointmentSchema = new mongoose.Schema(
         minlength: 5,
         maxlength: 500
         },
+        suggestionMessage: {
+        type: String,
+        required: false,
+        trim: true,
+        maxlength: 1000
+        },
         status: {
         type: String,
         enum: ["PENDING", "CONFIRMED", "CANCELLED", "RESCHEDULED", "COMPLETED"],

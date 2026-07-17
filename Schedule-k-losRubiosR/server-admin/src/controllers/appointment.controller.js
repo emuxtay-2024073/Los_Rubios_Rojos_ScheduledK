@@ -309,9 +309,13 @@ class AppointmentController {
                 });
             }
 
+            const { suggestedDate, suggestedTime, suggestionMessage } = req.body || {};
             const appointment = await AppointmentService.cancelAppointment(
                 req.params.id,
-                req.user.id
+                req.user.id,
+                suggestedDate,
+                suggestedTime,
+                suggestionMessage,
             );
 
             return res.json(appointment);

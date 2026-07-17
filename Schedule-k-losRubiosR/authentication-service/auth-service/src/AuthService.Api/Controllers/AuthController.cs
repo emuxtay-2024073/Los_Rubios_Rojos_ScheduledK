@@ -82,8 +82,8 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("users")]
-    [Authorize(Roles = "ADMIN")]
-    [SwaggerOperation(Summary = "Listar usuarios (requiere ADMIN)", Description = "Listado de usuarios. Solo accesible por administradores.")]
+    [Authorize(Roles = "ADMIN,Coordinador")]
+    [SwaggerOperation(Summary = "Listar usuarios (requiere ADMIN o Coordinador)", Description = "Listado de usuarios. Accesible por administradores y coordinadores.")]
     public async Task<IActionResult> GetAllUsers()
     {
         var list = await _context.Users.Find(_ => true).ToListAsync();

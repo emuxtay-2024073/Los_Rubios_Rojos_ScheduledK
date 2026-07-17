@@ -138,14 +138,6 @@ export const Users = () => {
             verificación.
           </p>
         </div>
-        <button
-          type='button'
-          className='admin-button-primary px-5 py-3 text-sm'
-          onClick={() => setOpenCreateModal(true)}
-        >
-          <UserPlusIcon className='h-5 w-5' />
-          Agregar usuario
-        </button>
       </div>
 
       <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>

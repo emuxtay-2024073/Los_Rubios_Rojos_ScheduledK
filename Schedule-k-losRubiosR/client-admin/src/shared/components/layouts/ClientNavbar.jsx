@@ -3,16 +3,16 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import imgLogo from '../../../assets/img/logo_scheduled_img.png';
 import { useAuthStore } from '../../../features/auth/store/authStore.js';
 
-const navItems = [
-  { label: 'Reservas', to: '/cliente/reservations' },
-];
-
 export const ClientNavbar = () => {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef();
+  const basePath = (user?.role || '').toUpperCase() === 'PADRE' ? '/padre' : '/cliente';
+  const navItems = [
+    { label: 'Ver mis citas', to: `${basePath}/reservations` },
+  ];
 
   useEffect(() => {
     const onDoc = (event) => {
@@ -30,7 +30,7 @@ export const ClientNavbar = () => {
   return (
     <header className='sticky top-0 z-50 border-b border-white/60 bg-white/85 backdrop-blur-xl'>
       <div className='mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8'>
-        <Link to='/cliente' className='flex items-center gap-3'>
+        <Link to={basePath} className='flex items-center gap-3'>
           <img src={imgLogo} alt='Los Rubios Rojos' className='h-10 w-auto' />
           <div className='hidden sm:block'>
             <p className='text-sm font-semibold text-main-blue'>Los Rubios Rojos</p>
@@ -40,7 +40,7 @@ export const ClientNavbar = () => {
 
         <nav className='hidden gap-2 md:flex'>
           <NavLink
-            to='/cliente'
+            to={basePath}
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className={({ isActive }) =>
               `rounded-full px-4 py-2 text-sm font-medium transition ${
