@@ -2,11 +2,12 @@ import Notification from "../models/notification.model.js";
 
 class NotificationService {
 
-    static async createBroadcast(title, message, coordinatorId) {
+    static async createBroadcast(title, message, coordinatorId, coordinatorName) {
         const notification = await Notification.create({
             title,
             message,
             coordinatorId,
+            coordinatorName,
             isBroadcast: true
         });
 

@@ -8,6 +8,7 @@ import appointmentRoutes from "./src/routes/appointment.routes.js";
 import errorHandler from "./src/middlewares/error.middleware.js";
 import { setupSwagger } from "./src/config/swagger.js";
 import notificationRoutes from "./src/routes/notification.routes.js";
+import calendarNoteRoutes from "./src/routes/calendarNote.routes.js";
 import { initReminderJob } from "./src/services/reminder.service.js"; 
 import appointmentHistoryRoutes from "./src/routes/appointmentHistory.routes.js";
 
@@ -45,6 +46,7 @@ app.get("/health", (req, res) => {
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/appointment-history", appointmentHistoryRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/calendar-notes", calendarNoteRoutes);
 
 setupSwagger(app);
 

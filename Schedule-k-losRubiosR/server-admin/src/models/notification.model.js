@@ -19,6 +19,11 @@ const notificationSchema = new mongoose.Schema(
             required: true,
             index: true
         },
+        coordinatorName: {
+            type: String,
+            required: true,
+            trim: true
+        },
         isBroadcast: {
             type: Boolean,
             default: true

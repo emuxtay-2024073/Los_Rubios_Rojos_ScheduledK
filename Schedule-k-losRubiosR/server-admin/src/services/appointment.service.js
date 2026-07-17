@@ -122,7 +122,7 @@ class AppointmentService {
   }
 
   static async getAppointmentsByUser(userId, role, parentIdFilter = null) {
-    const normalizedRole = role.toUpperCase();
+    const normalizedRole = (role || '').toUpperCase();
     if (normalizedRole === "PADRE") {
       return await Appointment.find({ parentId: userId }).sort({ date: 1 });
     }
@@ -133,7 +133,8 @@ class AppointmentService {
       }
       return await Appointment.find(query).sort({ date: 1 });
     }
-    if (normalizedRole === "ADMINISTRADOR") {
+    // Aceptar variantes de administrador (ADMIN, ADMINISTRADOR)
+    if (normalizedRole.includes("ADMIN")) {
       const query = {};
       if (parentIdFilter) query.parentId = parentIdFilter;
       return await Appointment.find(query).sort({ date: 1 });
@@ -165,7 +166,7 @@ class AppointmentService {
     return appointment;
   }
 
-  static async cancelAppointment(id, userId) {
+  static async cancelAppointment(id, userId, suggestedDate, suggestedTime, suggestionMessage) {
     const appointment = await Appointment.findById(id);
     if (!appointment) throw new Error("La cita no existe en el sistema");
 
@@ -182,12 +183,24 @@ class AppointmentService {
     }
 
     appointment.status = "CANCELLED";
+    // store parent's suggestion message on the appointment document for coordinator visibility
+    appointment.suggestionMessage = suggestionMessage || appointment.suggestionMessage || null;
     await appointment.save();
+
+    const details = {
+      originalDate: appointment.date?.toISOString?.() || appointment.date,
+      originalStart: appointment.startTime,
+      originalEnd: appointment.endTime,
+    };
+    if (suggestedDate) details.suggestedDate = suggestedDate;
+    if (suggestedTime) details.suggestedTime = suggestedTime;
+    if (suggestionMessage) details.suggestionMessage = suggestionMessage;
 
     await historyService.createHistory({
       appointmentId: appointment._id,
       action: "CANCELLED",
       performedBy: userId,
+      details,
     });
 
     return appointment;
@@ -212,12 +225,13 @@ class AppointmentService {
       throw new Error("Solo se pueden reagendar citas que estén canceladas");
     }
 
-    // No se puede reagendar para el mismo día ni días anteriores a la cita cancelada
+    // No se puede reagendar para días anteriores a la cita cancelada.
+    // El mismo día es válido si el coordinador elige un nuevo horario.
     const originalDate = this.normalizeDate(appointment.date);
     const newAppointmentDate = this.normalizeDate(newDate);
-    if (newAppointmentDate <= originalDate) {
+    if (newAppointmentDate < originalDate) {
       throw new Error(
-        "No se puede reagendar para el mismo día ni días anteriores a la cita cancelada",
+        "No se puede reagendar para días anteriores a la cita cancelada",
       );
     }
 

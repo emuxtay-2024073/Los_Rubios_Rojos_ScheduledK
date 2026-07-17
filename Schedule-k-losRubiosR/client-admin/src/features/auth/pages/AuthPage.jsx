@@ -4,6 +4,7 @@ import { ForgotPassword } from '../components/ForgotPassword.jsx';
 import { RegisterForm } from '../components/RegisterForm.jsx';
 import { useAuthStore } from '../store/authStore.js';
 import { useNavigate } from 'react-router-dom';
+import { getRoleHomePath } from '../../../shared/utils/roleViews.js';
 import logo from '../../../assets/img/logo_scheduled_img.png';
 import heroImage from '../../../assets/img/LOGIN_IMG.png';
 import bgImage from '../../../assets/img/holahojitas.jpg';
@@ -17,12 +18,9 @@ export const AuthPage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      const role = user?.role?.toUpperCase();
-      if (role?.includes('ADMIN')) {
-        navigate('/dashboard', { replace: true });
-      } else {
-        navigate('/cliente', { replace: true });
-      }
+      const role = user?.role;
+      const homePath = getRoleHomePath(role);
+      navigate(homePath, { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 

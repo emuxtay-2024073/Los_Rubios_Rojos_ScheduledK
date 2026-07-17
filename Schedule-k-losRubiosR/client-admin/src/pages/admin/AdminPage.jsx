@@ -104,6 +104,14 @@ export const AdminPage = () => {
               <p className='mt-3 text-3xl font-black text-gray-900'>{stats.verified}</p>
             </article>
           </div>
+          <div className='flex items-center gap-3'>
+            <Link
+              to='/dashboard'
+              className='rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50'
+            >
+              Regresar al panel
+            </Link>
+          </div>
         </div>
         <div className='grid gap-4'>
           {loading ? (

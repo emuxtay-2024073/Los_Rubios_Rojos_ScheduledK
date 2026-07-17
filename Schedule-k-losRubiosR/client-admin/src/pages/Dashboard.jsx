@@ -17,6 +17,7 @@ import { useUserManagementStore } from '../features/auth/store/useUserManagement
 import {
   getAppointments,
   getAppointmentHistory,
+  getMyNotifications,
 } from '../services/adminApi.js';
 import heroPenguin from '../assets/img/LOGIN_IMG.png';
 
@@ -86,23 +87,9 @@ const getAppointmentBadge = (status) => {
   return { label: 'Pendiente', className: 'admin-status-warning' };
 };
 
-const getStudentLabel = (reservation) => {
-  if (reservation?.studentName) return reservation.studentName;
-
-  if (reservation?.customerEmail) {
-    const [localPart] = reservation.customerEmail.split('@');
-    return localPart
-      .split(/[._-]/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-      .join(' ');
-  }
-
-  if (reservation?.numberOfGuests) {
-    return `${reservation.numberOfGuests} integrante(s)`;
-  }
-
+const getAppointmentLabel = (reservation) => {
+  if (reservation?.reason) return reservation.reason;
+  if (reservation?.parentId) return reservation.parentId;
   return 'Por confirmar';
 };
 
@@ -157,12 +144,15 @@ const DashboardSkeleton = () => (
 export const Dashboard = () => {
   const location = useLocation();
   const user = useAuthStore((state) => state.user);
-  const isSuperAdmin = user?.role?.toUpperCase() === 'SUPER_ADMIN';
+  const role = user?.role?.toUpperCase();
+  const isSuperAdmin = role === 'SUPER_ADMIN';
+  const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'ADMIN_ROLE'].includes(role);
   const { users, getAllUsers } = useUserManagementStore();
 
   const [appointments, setAppointments] = useState([]);
   const [appointmentHistory, setAppointmentHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [generalMessage, setGeneralMessage] = useState({ text: '', author: '' });
 
   useEffect(() => {
     let cancelled = false;
@@ -211,6 +201,69 @@ export const Dashboard = () => {
   }, []);
 
   useEffect(() => {
+    const handleStoredMessage = (raw) => {
+      if (!raw) {
+        setGeneralMessage({ text: '', author: '' });
+        return;
+      }
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed?.text) setGeneralMessage(parsed);
+        else setGeneralMessage({ text: String(parsed || ''), author: '' });
+      } catch {
+        setGeneralMessage({ text: raw, author: '' });
+      }
+    };
+
+    const loadGeneralMessage = async () => {
+      try {
+        const notifications = await getMyNotifications();
+        if (Array.isArray(notifications) && notifications.length > 0) {
+          const latest = notifications[0];
+          setGeneralMessage({ text: latest.message || '', author: latest.coordinatorName || latest.coordinatorId || '' });
+        }
+      } catch (error) {
+        console.error('Error cargando mensajes generales:', error);
+      }
+    };
+
+    let removeStorageListener = null;
+
+    if (typeof window !== 'undefined') {
+      loadGeneralMessage();
+
+      const storedMessage = window.localStorage.getItem('general-app-message');
+      if (storedMessage) handleStoredMessage(storedMessage);
+
+      const onStorage = (e) => {
+        if (e.key === 'general-app-message') {
+          handleStoredMessage(e.newValue);
+        }
+      };
+
+      window.addEventListener('storage', onStorage);
+      removeStorageListener = () => window.removeEventListener('storage', onStorage);
+
+      try {
+        const bc = new BroadcastChannel('general-app-message');
+        bc.onmessage = (ev) => handleStoredMessage(JSON.stringify(ev.data));
+        const removeBc = () => bc.close();
+        const prev = removeStorageListener;
+        removeStorageListener = () => {
+          if (prev) prev();
+          removeBc();
+        };
+      } catch (e) {
+        /* ignore BroadcastChannel absence */
+      }
+    }
+
+    return () => {
+      if (removeStorageListener) removeStorageListener();
+    };
+  }, []);
+
+  useEffect(() => {
     if (isSuperAdmin) {
       getAllUsers(undefined, { force: true });
     }
@@ -244,19 +297,19 @@ export const Dashboard = () => {
     );
 
     const appointmentsToday = appointments.filter((item) =>
-      isSameDay(item.appointmentDate || item.createdAt, today),
+      isSameDay(item.date || item.createdAt, today),
     );
 
     const completedMonthly = appointments.filter((item) => {
       const badge = getAppointmentBadge(item.status);
       return (
-        isSameMonth(item.appointmentDate || item.createdAt, today) &&
+        isSameMonth(item.date || item.createdAt, today) &&
         ['Confirmada', 'Completada'].includes(badge.label)
       );
     });
 
     const uniqueFamilies = new Set(
-      appointments.map((item) => item.customerEmail || item.customerName).filter(Boolean),
+      appointments.map((item) => item.parentId).filter(Boolean),
     );
 
     const confirmationRate = appointments.length
@@ -272,8 +325,8 @@ export const Dashboard = () => {
 
     const recentAppointments = [...appointments]
       .sort((a, b) => {
-        const firstDate = new Date(a.appointmentDate || a.createdAt || 0).getTime();
-        const secondDate = new Date(b.appointmentDate || b.createdAt || 0).getTime();
+        const firstDate = new Date(a.date || a.createdAt || 0).getTime();
+        const secondDate = new Date(b.date || b.createdAt || 0).getTime();
         return firstDate - secondDate;
       })
       .slice(0, 6);
@@ -320,29 +373,6 @@ export const Dashboard = () => {
     [isSuperAdmin],
   );
 
-  const reportCards = useMemo(
-    () => [
-      {
-        label: 'Índice de confirmación',
-        value: `${dashboardSummary.confirmationRate}%`,
-        helper: 'Citas confirmadas o completadas respecto al total operativo.',
-      },
-      {
-        label: 'Usuarios verificados',
-        value: dashboardSummary.totalUsers
-          ? `${dashboardSummary.verifiedCount}/${dashboardSummary.totalUsers}`
-          : 'Sin datos',
-        helper: 'Personas con acceso institucional validado.',
-      },
-      {
-        label: 'Actividad mensual',
-        value: `${dashboardSummary.monthlyOrders} eventos`,
-        helper: 'Señales operativas detectadas en el mes actual.',
-      },
-    ],
-    [dashboardSummary],
-  );
-
   const currentDateLabel = useMemo(
     () =>
       new Intl.DateTimeFormat('es-GT', {
@@ -381,15 +411,11 @@ export const Dashboard = () => {
             </div>
 
             <div className='flex flex-col gap-3 sm:flex-row'>
-              <Link to='/dashboard/reservations' className='admin-button-primary px-7 py-4 text-sm'>
-                GESTIONAR CITAS
-              </Link>
-              <Link
-                to={{ pathname: '/dashboard', hash: '#reportes' }}
-                className='admin-button-secondary px-7 py-4 text-sm'
-              >
-                VER REPORTES
-              </Link>
+              {!isAdmin && (
+                <Link to='/dashboard/reservations' className='admin-button-primary px-7 py-4 text-sm'>
+                  GESTIONAR CITAS
+                </Link>
+              )}
             </div>
 
             <div className='flex flex-wrap gap-3 pt-2'>
@@ -426,34 +452,6 @@ export const Dashboard = () => {
               SK
             </div>
 
-            <div className='admin-report-card'>
-              <p className='admin-report-card__eyebrow'>Resumen Admin</p>
-              <h3 className='admin-report-card__title'>Control rápido</h3>
-              <div className='admin-report-card__grid'>
-                <div>
-                  <span>Citas hoy</span>
-                  <strong>{dashboardSummary.scheduledToday}</strong>
-                </div>
-                <div>
-                  <span>Usuarios</span>
-                  <strong>{dashboardSummary.totalUsers}</strong>
-                </div>
-                <div>
-                  <span>Completadas</span>
-                  <strong>{dashboardSummary.monthlyCompleted}</strong>
-                </div>
-                <div>
-                  <span>Confirmación</span>
-                  <strong>{dashboardSummary.confirmationRate}%</strong>
-                </div>
-              </div>
-              <div className='admin-report-card__lines' aria-hidden='true'>
-                <span />
-                <span />
-                <span />
-              </div>
-            </div>
-
             <img
               src={heroPenguin}
               alt='Pingüino institucional para administradores'
@@ -463,287 +461,25 @@ export const Dashboard = () => {
         </div>
       </section>
 
-      <section id='citas' className='admin-section-anchor grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-        {[
-          {
-            label: 'Citas Programadas',
-            value: dashboardSummary.scheduledToday,
-            helper: 'Total del día',
-            icon: CalendarDaysIcon,
-            accent: 'violet',
-          },
-          {
-            label: 'Padres Registrados',
-            value: dashboardSummary.parentCount,
-            helper: 'Base general institucional',
-            icon: UserGroupIcon,
-            accent: 'mint',
-          },
-          {
-            label: 'Docentes Disponibles',
-            value: dashboardSummary.teacherCount,
-            helper: 'Cobertura actual',
-            icon: AcademicCapIcon,
-            accent: 'green',
-          },
-          {
-            label: 'Reuniones Completadas',
-            value: dashboardSummary.monthlyCompleted,
-            helper: 'Acumulado mensual',
-            icon: ClipboardDocumentCheckIcon,
-            accent: 'neutral',
-          },
-        ].map((card, index) => {
-          const Icon = card.icon;
-          return (
-            <article
-              key={card.label}
-              className='admin-card admin-stat-card p-6'
-              style={{ animation: `adminRise 420ms ease ${index * 70}ms both` }}
-            >
-              <div className='flex items-start justify-between gap-4'>
-                <div>
-                  <p className='text-sm font-bold text-[#5E5E5E]'>{card.label}</p>
-                  <p className='mt-4 text-[2rem] font-black leading-none text-[#202020]'>
-                    {card.value}
-                  </p>
-                  <p className='mt-3 text-sm text-[#5E5E5E]'>{card.helper}</p>
-                </div>
-                <div className={`admin-stat-icon ${card.accent}`}>
-                  <Icon className='h-6 w-6' />
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </section>
-
-      <section className='grid gap-6 xl:grid-cols-[1.02fr_0.98fr]'>
-        <div id='padres' className='admin-section-anchor admin-panel p-6 lg:p-7'>
-          <div className='flex items-center justify-between gap-4'>
-            <div>
-              <p className='admin-kicker'>Acciones rápidas</p>
-              <h2 className='mt-2 text-2xl font-black text-[#202020]'>
-                Centro de gestión inmediata
-              </h2>
-            </div>
-            <span className='admin-status admin-status-neutral'>
-              Flujo ágil
-            </span>
-          </div>
-
-          <div className='mt-6 grid gap-4 md:grid-cols-2'>
-            {quickActions.map((action, index) => {
-              const Icon = action.icon;
-              return (
-                <Link
-                  key={action.title}
-                  to={action.to}
-                  className='admin-quick-action'
-                  style={{ animation: `adminRise 420ms ease ${index * 60}ms both` }}
-                >
-                  <div className='admin-quick-action__icon'>
-                    <Icon className='h-6 w-6' />
-                  </div>
-                  <div>
-                    <h3 className='text-lg font-extrabold text-[#202020]'>{action.title}</h3>
-                    <p className='mt-2 text-sm leading-6 text-[#5E5E5E]'>
-                      {action.description}
-                    </p>
-                  </div>
-                  <ChevronRightIcon className='h-5 w-5 text-[#5648E7]' />
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        <div id='docentes' className='admin-section-anchor admin-panel p-6 lg:p-7'>
-          <div className='flex items-center justify-between gap-4'>
-            <div>
-              <p className='admin-kicker'>Pulso institucional</p>
-              <h2 className='mt-2 text-2xl font-black text-[#202020]'>
-                Resumen de coordinación
-              </h2>
-            </div>
-            <span className='admin-status admin-status-success'>
-              Estable
-            </span>
-          </div>
-
-          <div className='mt-6 space-y-4'>
-            {[
-              {
-                label: 'Familias activas',
-                value: dashboardSummary.parentCount,
-                progress: Math.min(100, dashboardSummary.parentCount * 8 + 18),
-              },
-              {
-                label: 'Cobertura docente',
-                value: dashboardSummary.teacherCount,
-                progress: Math.min(100, dashboardSummary.teacherCount * 18 + 14),
-              },
-              {
-                label: 'Cierre mensual',
-                value: dashboardSummary.monthlyCompleted,
-                progress: Math.min(100, dashboardSummary.monthlyCompleted * 12 + 10),
-              },
-            ].map((item) => (
-              <div key={item.label} className='admin-data-strip'>
-                <div className='flex items-center justify-between gap-3'>
-                  <div>
-                    <p className='text-sm font-bold text-[#202020]'>{item.label}</p>
-                    <p className='text-xs font-semibold uppercase tracking-[0.18em] text-[#5E5E5E]'>
-                      Coordinación académica
-                    </p>
-                  </div>
-                  <span className='text-2xl font-black text-[#5648E7]'>{item.value}</span>
-                </div>
-                <div className='mt-4 admin-progress'>
-                  <span style={{ width: `${item.progress}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id='reportes' className='admin-section-anchor grid gap-6 xl:grid-cols-[1.15fr_0.85fr]'>
-        <div className='admin-panel overflow-hidden p-6 lg:p-7'>
-          <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-            <div>
-              <p className='admin-kicker'>Citas recientes</p>
-              <h2 className='mt-2 text-2xl font-black text-[#202020]'>
-                Agenda institucional más reciente
-              </h2>
-            </div>
-            <Link to='/dashboard/reservations' className='admin-button-secondary px-5 py-3 text-sm'>
-              Abrir módulo de citas
+      {/* Simplified dashboard: each segment is its own admin view. */}
+      <section className='admin-panel p-6 rounded-[2rem] border border-slate-200 bg-white/80 shadow-sm'>
+        <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
+          {!isAdmin && (
+            <Link to='/dashboard/reservations' className='admin-module-card'>
+              <h3 className='text-lg font-bold'>Módulo Citas</h3>
+              <p className='mt-2 text-sm text-slate-600'>Ver y gestionar citas en su propio espacio.</p>
             </Link>
-          </div>
+          )}
 
-          <div className='mt-6 overflow-x-auto'>
-            <table className='admin-table min-w-full text-left text-sm'>
-              <thead>
-                <tr>
-                  <th className='px-4 py-4'>Padre</th>
-                  <th className='px-4 py-4'>Estudiante</th>
-                  <th className='px-4 py-4'>Docente</th>
-                  <th className='px-4 py-4'>Fecha</th>
-                  <th className='px-4 py-4'>Hora</th>
-                  <th className='px-4 py-4'>Estado</th>
-                  <th className='px-4 py-4'>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dashboardSummary.recentAppointments.length === 0 ? (
-                  <tr>
-                    <td colSpan='7' className='px-4 py-10 text-center text-sm text-[#5E5E5E]'>
-                      Aún no hay citas recientes para mostrar.
-                    </td>
-                  </tr>
-                ) : (
-                  dashboardSummary.recentAppointments.map((appointment) => {
-                    const badge = getAppointmentBadge(appointment.status);
-                    return (
-                      <tr key={appointment._id || `${appointment.customerEmail}-${appointment.createdAt}`}>
-                        <td className='px-4 py-4 font-semibold text-[#202020]'>
-                          {appointment.customerName || 'Padre por confirmar'}
-                        </td>
-                        <td className='px-4 py-4 text-[#5E5E5E]'>
-                          {getStudentLabel(appointment)}
-                        </td>
-                        <td className='px-4 py-4 text-[#5E5E5E]'>
-                          {appointment.__coordinatorName}
-                        </td>
-                        <td className='px-4 py-4 text-[#5E5E5E]'>
-                          {formatDate(appointment.reservationDate || appointment.createdAt)}
-                        </td>
-                        <td className='px-4 py-4 text-[#5E5E5E]'>
-                          {formatTime(appointment.reservationDate || appointment.createdAt)}
-                        </td>
-                        <td className='px-4 py-4'>
-                          <span className={`admin-status ${badge.className}`}>
-                            {badge.label}
-                          </span>
-                        </td>
-                        <td className='px-4 py-4'>
-                          <Link
-                            to='/dashboard/reservations'
-                            className='text-sm font-bold text-[#5648E7] transition hover:text-[#4438D8]'
-                          >
-                            Gestionar
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+          <Link to='/dashboard/users' className='admin-module-card'>
+            <h3 className='text-lg font-bold'>Módulo Usuarios</h3>
+            <p className='mt-2 text-sm text-slate-600'>Listar y actualizar roles de usuarios (Admin).</p>
+          </Link>
 
-        <div className='space-y-6'>
-          <div className='admin-panel p-6 lg:p-7'>
-            <div className='flex items-center justify-between gap-4'>
-              <div>
-                <p className='admin-kicker'>Reportes clave</p>
-                <h2 className='mt-2 text-2xl font-black text-[#202020]'>
-                  Indicadores ejecutivos
-                </h2>
-              </div>
-              <span className='admin-status admin-status-warning'>
-                En vivo
-              </span>
-            </div>
-
-            <div className='mt-6 space-y-4'>
-              {reportCards.map((card) => (
-                <article key={card.label} className='admin-data-strip'>
-                  <div className='flex items-center justify-between gap-3'>
-                    <div>
-                      <p className='text-sm font-bold text-[#202020]'>{card.label}</p>
-                      <p className='mt-1 text-sm text-[#5E5E5E]'>{card.helper}</p>
-                    </div>
-                    <p className='text-xl font-black text-[#5648E7]'>{card.value}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div id='usuarios' className='admin-section-anchor admin-panel p-6 lg:p-7'>
-            <div className='flex items-center justify-between gap-4'>
-              <div>
-                <p className='admin-kicker'>Usuarios y configuración</p>
-                <h2 className='mt-2 text-2xl font-black text-[#202020]'>
-                  Operación institucional
-                </h2>
-              </div>
-              <span className='admin-status admin-status-neutral'>
-                Premium
-              </span>
-            </div>
-
-            <div className='mt-6 grid gap-4 md:grid-cols-2'>
-              <Link
-                to={isSuperAdmin ? '/dashboard/users' : '/dashboard#usuarios'}
-                className='admin-mini-panel'
-              >
-                <div className='admin-mini-panel__icon'>
-                  <UsersIcon className='h-6 w-6' />
-                </div>
-                <div>
-                  <h3 className='text-lg font-extrabold text-[#202020]'>Usuarios</h3>
-                  <p className='mt-2 text-sm leading-6 text-[#5E5E5E]'>
-                    Accesos, permisos y seguimiento de verificación.
-                  </p>
-                </div>
-              </Link>
-
-            </div>
-          </div>
+          <Link to='/dashboard/admin-home' className='admin-module-card'>
+            <h3 className='text-lg font-bold'>Panel Administrativo</h3>
+            <p className='mt-2 text-sm text-slate-600'>Vistas y utilidades administrativas separadas.</p>
+          </Link>
         </div>
       </section>
     </div>
