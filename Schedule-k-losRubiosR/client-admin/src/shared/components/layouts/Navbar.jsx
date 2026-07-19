@@ -43,8 +43,8 @@ const getActiveNavId = ({ pathname, search, hash }) => {
   }
 
   if (pathname === '/dashboard' && hash) {
-    const normalized = hash.replace('#', '').toLowerCase();
-    if (normalized) return normalized;
+    const hashValue = String(hash || '').replace('#', '').toLowerCase().trim();
+    if (hashValue) return hashValue;
   }
 
   return 'dashboard';

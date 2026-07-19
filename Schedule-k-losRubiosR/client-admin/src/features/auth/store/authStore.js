@@ -12,8 +12,22 @@ const parseJwt = (token) => {
         .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join(''),
     );
-    return JSON.parse(jsonPayload);
-  } catch {
+    const parsed = JSON.parse(jsonPayload);
+    
+    // Buscar el rol en la primera ubicación donde aparezca
+    let role = parsed.role || parsed.Role || 'USER';
+    
+    // Limpiar: remover espacios, convertir a mayúsculas
+    role = String(role).trim().toUpperCase();
+    
+    // Reemplazar el rol parseado en el objeto
+    parsed.role = role;
+    
+    console.log('JWT Parsed - Role:', role, 'Full Claims:', parsed);
+    
+    return parsed;
+  } catch (error) {
+    console.error('Error parsing JWT:', error);
     return null;
   }
 };
@@ -31,10 +45,10 @@ export const useAuthStore = create(
       isAuthenticated: false,
 
       checkAuth: () => {
-        const token = get().token;
+        const state = get();
         set({
           isLoadingAuth: false,
-          isAuthenticated: Boolean(token),
+          isAuthenticated: Boolean(state.token),
         });
       },
 
@@ -70,7 +84,7 @@ export const useAuthStore = create(
           }
 
           const claims = parseJwt(token) || {};
-          const role = claims?.role || 'USER';
+          const role = String(claims?.role || 'USER');
 
           set({
             user: {
@@ -94,6 +108,7 @@ export const useAuthStore = create(
             refreshToken: null,
             expiresAt: claims?.exp ? new Date(claims.exp * 1000).toISOString() : null,
             isAuthenticated: true,
+            isLoadingAuth: false,
             loading: false,
           });
 
@@ -104,7 +119,7 @@ export const useAuthStore = create(
           const message = isBadCredentials
             ? 'Correo o contrasena incorrectos.'
             : responseData?.message || err?.message || 'Error al iniciar sesion';
-          set({ error: message, loading: false });
+          set({ error: message, loading: false, isLoadingAuth: false });
           return {
             success: false,
             error: message,
@@ -145,8 +160,8 @@ export const useAuthStore = create(
         if (state) {
           state.loading = false;
           state.error = null;
-          state.isAuthenticated = Boolean(state.token);
           state.isLoadingAuth = false;
+          state.isAuthenticated = Boolean(state.token && state.user);
         }
       },
     },

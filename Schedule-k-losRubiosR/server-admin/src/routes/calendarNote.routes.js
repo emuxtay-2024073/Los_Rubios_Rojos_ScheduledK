@@ -8,14 +8,14 @@ const router = express.Router();
 router.get(
   "/",
   authMiddleware,
-  roleMiddleware("Coordinador"),
+  roleMiddleware("COORDINADOR"),
   CalendarNoteController.listByMonth
 );
 
 router.post(
   "/",
   authMiddleware,
-  roleMiddleware("Coordinador"),
+  roleMiddleware("COORDINADOR"),
   CalendarNoteController.createNote
 );
 

@@ -9,6 +9,7 @@ import {
   Squares2X2Icon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
+import logo from '../../../assets/img/logo_scheduled_img.png';
 
 export const Sidebar = () => {
   const location = useLocation();
@@ -18,7 +19,7 @@ export const Sidebar = () => {
 
   const items = [
     { label: 'Dashboard', to: '/dashboard', icon: Squares2X2Icon },
-    { label: 'Reservaciones', to: '/dashboard/reservations', icon: CalendarDaysIcon },
+    { label: 'Citas', to: '/dashboard/reservations', icon: CalendarDaysIcon },
     ...(isSuperAdmin ? [{ label: 'Usuarios', to: '/dashboard/users', icon: UserGroupIcon }] : []),
   ];
 
@@ -34,10 +35,16 @@ export const Sidebar = () => {
       className={`shrink-0 border-r border-white/10 bg-[#1f2937] text-white shadow-2xl transition-[width] duration-250 md:min-h-[calc(100vh-4rem)] ${collapsed ? 'md:w-24' : 'md:w-72'}`}
     >
       <div className='flex items-center justify-between gap-3 border-b border-white/10 px-4 py-4 md:px-5'>
-        <div className={`hidden min-w-0 md:block ${collapsed ? 'md:hidden' : ''}`}>
-          <p className='text-xs font-black uppercase tracking-[0.16em] text-[#f59e0b]'>Schedule-K</p>
-          <h2 className='truncate text-lg font-black text-white'>Los Rubios Rojos</h2>
+        <div className={`hidden min-w-0 md:flex md:items-center md:gap-2 ${collapsed ? 'md:hidden' : ''}`}>
+          <img src={logo} alt='Schedule-K' className='h-8 w-auto' />
+          <div className='min-w-0'>
+            <p className='text-xs font-black uppercase tracking-[0.16em] text-[#f59e0b]'>Schedule-K</p>
+            <h2 className='truncate text-sm font-black text-white'>Los Rubios Rojos</h2>
+          </div>
         </div>
+        {collapsed && (
+          <img src={logo} alt='Schedule-K' className='hidden h-8 w-auto md:block' />
+        )}
         <Bars3Icon className='h-6 w-6 text-[#f59e0b] md:hidden' />
         <button
           type='button'

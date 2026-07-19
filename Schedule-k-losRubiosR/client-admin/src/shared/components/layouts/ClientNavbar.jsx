@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { ArrowRightOnRectangleIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import imgLogo from '../../../assets/img/logo_scheduled_img.png';
+import mascotImg from '../../../assets/img/DENTRO_mg.png';
 import { useAuthStore } from '../../../features/auth/store/authStore.js';
 
 export const ClientNavbar = () => {
@@ -9,7 +11,8 @@ export const ClientNavbar = () => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef();
-  const basePath = (user?.role || '').toUpperCase() === 'PADRE' ? '/padre' : '/cliente';
+  const userRole = user?.role ? String(user.role).toUpperCase() : '';
+  const basePath = userRole === 'PADRE' ? '/padre' : '/cliente';
   const navItems = [
     { label: 'Ver mis citas', to: `${basePath}/reservations` },
   ];
@@ -28,73 +31,84 @@ export const ClientNavbar = () => {
   };
 
   return (
-    <header className='sticky top-0 z-50 border-b border-white/60 bg-white/85 backdrop-blur-xl'>
-      <div className='mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8'>
-        <Link to={basePath} className='flex items-center gap-3'>
-          <img src={imgLogo} alt='Los Rubios Rojos' className='h-10 w-auto' />
-          <div className='hidden sm:block'>
-            <p className='text-sm font-semibold text-main-blue'>Los Rubios Rojos</p>
-            <p className='text-xs text-gray-600'>Experiencia cliente</p>
-          </div>
+    <nav className='admin-topbar'>
+      <div className='admin-topbar__inner'>
+        <Link to={basePath} className='admin-brand'>
+          <span className='admin-brand__mark'>
+            <img src={imgLogo} alt='Los Rubios Rojos' className='h-9 w-auto object-contain' />
+          </span>
+          <span className='min-w-0'>
+            <span className='admin-brand__title'>Los Rubios Rojos</span>
+            <span className='admin-brand__subtitle'>{userRole === 'PADRE' ? 'Portal de familia' : 'Experiencia cliente'}</span>
+          </span>
         </Link>
 
-        <nav className='hidden gap-2 md:flex'>
-          <NavLink
-            to={basePath}
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            className={({ isActive }) =>
-              `rounded-full px-4 py-2 text-sm font-medium transition ${
-                isActive ? 'bg-main-blue text-white shadow-sm' : 'text-gray-700 hover:bg-surface-soft hover:text-main-blue'
-              }`
-            }
-          >
-            Dashboard
-          </NavLink>
-
-          {navItems.map((item) => (
+        <div className='hidden flex-1 items-center justify-center xl:flex'>
+          <div className='admin-menu'>
             <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `rounded-full px-4 py-2 text-sm font-medium transition ${
-                  isActive ? 'bg-main-blue text-white shadow-sm' : 'text-gray-700 hover:bg-surface-soft hover:text-main-blue'
-                }`
-              }
+              to={basePath}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className={({ isActive }) => `admin-menu-link ${isActive ? 'active' : ''}`}
             >
-              {item.label}
+              Inicio
             </NavLink>
-          ))}
-        </nav>
+            {navItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) => `admin-menu-link ${isActive ? 'active' : ''}`}
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+        </div>
 
-        <div className='relative' ref={ref}>
-          {user ? (
-            <button
-              type='button'
-              onClick={() => setOpen((state) => !state)}
-              className='inline-flex items-center gap-3 rounded-full border border-main-blue bg-white px-4 py-2 text-sm font-semibold text-main-blue'
-            >
-              <span className='hidden sm:inline'>{user.username || user.email || 'Usuario'}</span>
-              <svg className='h-4 w-4' viewBox='0 0 20 20' fill='currentColor' aria-hidden>
-                <path fillRule='evenodd' d='M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.27a.75.75 0 01.02-1.06z' clipRule='evenodd' />
-              </svg>
-            </button>
-          ) : null}
+        <div className='flex items-center gap-2 sm:gap-3'>
+          <span className='portal-mascot-bubble portal-mascot-float hidden h-11 w-11 flex-shrink-0 lg:inline-flex'>
+            <img src={mascotImg} alt='Schedulito' />
+          </span>
 
-          {open && (
-            <div className='absolute right-0 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5'>
-              <div className='py-1'>
-                <button
-                  type='button'
-                  onClick={handleLogout}
-                  className='w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50'
-                >
-                  Cerrar sesion
-                </button>
+          <div className='relative' ref={ref}>
+            {user ? (
+              <button
+                type='button'
+                onClick={() => setOpen((state) => !state)}
+                className='admin-profile-trigger px-3 py-1.5'
+                aria-haspopup='menu'
+                aria-expanded={open}
+              >
+                <span className='hidden text-left sm:block'>
+                  <span className='block truncate text-sm font-bold text-[#202020]'>
+                    {user.username || user.email || 'Usuario'}
+                  </span>
+                </span>
+                <ChevronDownIcon className='h-4 w-4 text-[#5E5E5E]' />
+              </button>
+            ) : null}
+
+            {open && (
+              <div className='animate-fadeIn absolute right-0 z-50 mt-3 w-60 overflow-hidden rounded-[1.5rem] border border-[rgba(86,72,231,0.12)] bg-white shadow-[0_30px_70px_rgba(0,0,0,0.12)]'>
+                <div className='flex items-center gap-3 border-b border-[rgba(86,72,231,0.08)] bg-[linear-gradient(135deg,rgba(221,245,222,0.9),rgba(255,255,255,0.98),rgba(200,241,204,0.68))] px-5 py-4'>
+                  <span className='portal-mascot-bubble h-10 w-10 flex-shrink-0'>
+                    <img src={mascotImg} alt='Schedulito' />
+                  </span>
+                  <div className='min-w-0'>
+                    <p className='truncate text-sm font-extrabold text-[#202020]'>{user?.username || 'Usuario'}</p>
+                    <p className='truncate text-xs text-[#5E5E5E]'>{user?.email}</p>
+                  </div>
+                </div>
+                <div className='p-3'>
+                  <button type='button' onClick={handleLogout} className='admin-dropdown-link text-[#4438D8]'>
+                    <ArrowRightOnRectangleIcon className='h-5 w-5' />
+                    Cerrar sesión
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </header>
+    </nav>
   );
 };

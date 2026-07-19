@@ -8,7 +8,7 @@ const router = express.Router();
 router.post(
   "/",
   authMiddleware,
-  roleMiddleware("Coordinador"),
+  roleMiddleware("COORDINADOR"),
   AppointmentController.create
 );
 
@@ -21,35 +21,35 @@ router.get(
 router.get(
   "/history",
   authMiddleware,
-  roleMiddleware("Coordinador"),
+  roleMiddleware("COORDINADOR"),
   AppointmentController.getCoordinatorHistory
 );
 
 router.get(
   "/my-history",
   authMiddleware,
-  roleMiddleware("Padre"),
+  roleMiddleware("PADRE"),
   AppointmentController.getParentHistory
 );
 
 router.patch(
   "/:id/confirm",
   authMiddleware,
-  roleMiddleware("Padre"),
+  roleMiddleware("PADRE"),
   AppointmentController.confirm
 );
 
 router.patch(
   "/:id/cancel",
   authMiddleware,
-  roleMiddleware("Padre"),
+  roleMiddleware("PADRE"),
   AppointmentController.cancel
 );
 
 router.put(
   "/:id/reschedule",
   authMiddleware,
-  roleMiddleware("Coordinador"),
+  roleMiddleware("COORDINADOR"),
   AppointmentController.reschedule
 );
 

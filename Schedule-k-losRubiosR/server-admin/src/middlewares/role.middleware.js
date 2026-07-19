@@ -5,19 +5,19 @@ const roleMiddleware = (requiredRole) => {
             return res.status(401).json({ message: "Usuario no autenticado o sin rol" });
         }
 
-        // Comparación flexible (insensible a mayúsculas)
-        const userRole = req.user.role.toLowerCase();
+        // Normalizar roles: convertir a mayúsculas y remover espacios
+        const userRole = (req.user.role || '').toString().trim().toUpperCase();
+        const required = (requiredRole || '').toString().trim().toUpperCase();
 
         // Administrador: permitir sólo operaciones de lectura (GET) en rutas protegidas.
-        // Esto garantiza que un ADMIN pueda listar recursos pero no modificar citas.
-        if (userRole.includes('admin') || userRole === 'administrador') {
+        if (userRole.includes('ADMIN')) {
             if (req.method === 'GET') return next();
             return res.status(403).json({ message: 'Acceso denegado: ADMIN sólo puede realizar operaciones de lectura en esta ruta' });
         }
 
-        if (userRole !== requiredRole.toLowerCase()) {
-                return res.status(403).json({ message: "Acceso denegado: se requiere rol " + requiredRole });
-            }
+        if (userRole !== required) {
+            return res.status(403).json({ message: "Acceso denegado: se requiere rol " + requiredRole });
+        }
         next();
     };
 };

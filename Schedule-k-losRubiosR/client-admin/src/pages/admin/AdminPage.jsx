@@ -9,7 +9,9 @@ export const AdminPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const user = useAuthStore((state) => state.user);
-  const isSuperAdmin = user?.role?.toUpperCase() === 'SUPER_ADMIN';
+  const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'ADMIN_ROLE'].includes(
+    (user?.role || '').toUpperCase(),
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -44,8 +46,8 @@ export const AdminPage = () => {
   const featuredUsers = useMemo(() => users.slice(0, 3), [users]);
 
   const handleRoleChange = async (userId, currentRole) => {
-    if (!isSuperAdmin) {
-      showError('Solo los SUPER_ADMIN pueden cambiar roles');
+    if (!isAdmin) {
+      showError('Solo los administradores pueden cambiar roles');
       return;
     }
 
@@ -54,7 +56,9 @@ export const AdminPage = () => {
     if (!confirmed) return;
 
     try {
-      await updateUserRole(userId, { role: newRole });
+      // Normalizar el rol a minúsculas para que coincida con lo esperado por el backend
+      const normalizedRole = newRole.toLowerCase();
+      await updateUserRole(userId, { role: normalizedRole });
       showSuccess(`Rol actualizado a ${newRole}`);
       // Reload users
       const data = await getAllUsers();
@@ -167,7 +171,7 @@ export const AdminPage = () => {
             </p>
             <h2 className='mt-1 text-2xl font-bold text-gray-900'>Resumen de roles</h2>
           </div>
-          {isSuperAdmin && (
+          {isAdmin && (
             <Link to='/dashboard/users' className='text-sm font-semibold text-main-blue hover:underline'>
               Ver todos los usuarios
             </Link>
