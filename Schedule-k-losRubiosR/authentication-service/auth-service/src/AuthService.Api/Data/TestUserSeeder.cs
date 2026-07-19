@@ -11,8 +11,9 @@ public static class TestUserSeeder
         var seedUsers = new[]
         {
             new { Email = "admin@test.com", Password = "Admin123!", Role = "ADMIN", Username = "admin.test", Nombres = "Admin", Apellidos = "Prueba" },
-            new { Email = "coordinador@test.com", Password = "Coordinator123!", Role = "Coordinador", Username = "coordinador.test", Nombres = "Coord", Apellidos = "Prueba" },
-            new { Email = "padre@test.com", Password = "Padre123!", Role = "Padre", Username = "padre.test", Nombres = "Padre", Apellidos = "Prueba" }
+            new { Email = "super_admin@test.com", Password = "SuperAdmin123!", Role = "SUPER_ADMIN", Username = "super.admin", Nombres = "Super", Apellidos = "Admin" },
+            new { Email = "coordinador@test.com", Password = "Coordinator123!", Role = "COORDINADOR", Username = "coordinador.test", Nombres = "Coord", Apellidos = "Prueba" },
+            new { Email = "padre@test.com", Password = "Padre123!", Role = "PADRE", Username = "padre.test", Nombres = "Padre", Apellidos = "Prueba" }
         };
 
         foreach (var seedUser in seedUsers)

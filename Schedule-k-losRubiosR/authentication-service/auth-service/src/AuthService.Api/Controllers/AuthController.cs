@@ -29,6 +29,27 @@ public class AuthController : ControllerBase
         _config = config;
     }
 
+    /// <summary>
+    /// Normaliza cualquier variación de un rol (mayúsculas/minúsculas, espacios, sinónimos
+    /// en español/inglés) al formato canónico usado por [Authorize(Roles = "...")].
+    /// Esto evita 403 por diferencias de casing entre lo guardado en Mongo y lo que
+    /// espera la autorización basada en roles.
+    /// </summary>
+    private static string NormalizeRole(string? role)
+    {
+        var value = (role ?? string.Empty).Trim();
+
+        return value.ToUpperInvariant() switch
+        {
+            "PADRE" or "PARENT" or "PADRES" => "PADRE",
+            "COORDINADOR" or "COORDINATOR" or "COORDINADORA" => "COORDINADOR",
+            "ADMIN" or "ADMINISTRADOR" or "ADMINISTRATOR" => "ADMIN",
+            "SUPER_ADMIN" or "SUPERADMIN" or "SUPER ADMIN" or "SUPER-ADMIN" => "SUPER_ADMIN",
+            var upper when !string.IsNullOrWhiteSpace(upper) => upper,
+            _ => "PADRE"
+        };
+    }
+
     [HttpPost("register")]
     [SwaggerOperation(
         Summary = "Registrar nuevo usuario en Scheduled-K",
@@ -56,7 +77,7 @@ public class AuthController : ControllerBase
             Id = Guid.NewGuid(),
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-            Role = "ADMIN",
+            Role = "PADRE",
             IsVerified = false,
             VerificationToken = Guid.NewGuid().ToString(),
             Username = request.Username,
@@ -82,35 +103,31 @@ public class AuthController : ControllerBase
     }
 
     [HttpGet("users")]
-    [Authorize(Roles = "ADMIN,Coordinador")]
+    [Authorize(Roles = "ADMIN,COORDINADOR")]
     [SwaggerOperation(Summary = "Listar usuarios (requiere ADMIN o Coordinador)", Description = "Listado de usuarios. Accesible por administradores y coordinadores.")]
     public async Task<IActionResult> GetAllUsers()
     {
         var list = await _context.Users.Find(_ => true).ToListAsync();
-        var result = list.Select(u => new { id = u.Id, email = u.Email, role = u.Role, username = u.Username, nombres = u.Nombres, apellidos = u.Apellidos, numero = u.Numero, isVerified = u.IsVerified });
+        var result = list.Select(u => new { id = u.Id, email = u.Email, role = NormalizeRole(u.Role), username = u.Username, nombres = u.Nombres, apellidos = u.Apellidos, numero = u.Numero, isVerified = u.IsVerified });
         return Ok(new { users = result });
     }
 
     [HttpPatch("users/{id}/role")]
-    [Authorize(Roles = "ADMIN")]
+    [Authorize(Roles = "ADMIN,SUPER_ADMIN")]
     [SwaggerOperation(Summary = "Cambiar rol de usuario (ADMIN)", Description = "Permite a administradores cambiar el rol de un usuario entre Padre y Coordinador.")]
     public async Task<IActionResult> ChangeUserRole(string id, [FromBody] ChangeRoleRequest request)
     {
-        if (!ModelState.IsValid)
-        {
-            var errores = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToArray();
-            return BadRequest(new { message = "Datos inválidos.", detalles = errores });
-        }
+        if (!request.Validate(out var validationError))
+            return BadRequest(new { message = validationError });
 
         if (!Guid.TryParse(id, out var userId))
             return BadRequest(new { message = "ID inválido" });
 
-        var allowed = new[] { "Padre", "Coordinador" };
-        if (!allowed.Contains(request.Role))
-            return BadRequest(new { message = "Rol inválido para asignar." });
+        // Normalizar el rol: convertir a formato consistente (todo mayúsculas)
+        var normalizedRole = NormalizeRole(request.Role);
 
         var filter = Builders<User>.Filter.Eq(u => u.Id, userId);
-        var update = Builders<User>.Update.Set(u => u.Role, request.Role);
+        var update = Builders<User>.Update.Set(u => u.Role, normalizedRole);
         var res = await _context.Users.UpdateOneAsync(filter, update);
         if (res.MatchedCount == 0) return NotFound(new { message = "Usuario no encontrado" });
 
@@ -165,13 +182,20 @@ public class AuthController : ControllerBase
             var keyString = _config["Jwt:Key"] ?? "Qu3_R3gr353_3I_Mauu_La_Un0_m0n3da";
             var key = Encoding.UTF8.GetBytes(keyString);
 
+            // Normalizamos el rol al generar el token: sin importar cómo esté guardado
+            // en Mongo (mayúsculas, minúsculas, con espacios, sinónimos, etc.), el claim
+            // "role" del JWT siempre queda en el formato exacto que [Authorize(Roles=...)] espera.
+            var normalizedRole = NormalizeRole(user.Role);
+
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new[]
                 {
+                    new Claim("sub", user.Id.ToString()),
                     new Claim("id", user.Id.ToString()),
                     new Claim("email", user.Email),
-                    new Claim("role", user.Role)
+                    new Claim("unique_name", user.Username ?? user.Email),
+                    new Claim("role", normalizedRole)
                 }),
                 Expires = DateTime.UtcNow.AddHours(8),
                 Issuer = _config["Jwt:Issuer"] ?? "AuthService",
@@ -187,7 +211,7 @@ public class AuthController : ControllerBase
             return Ok(new {
                 message = "Login exitoso",
                 token = tokenString,
-                user = new { user.Id, user.Email, user.Role }
+                user = new { user.Id, user.Email, Role = normalizedRole }
             });
         }
         catch (Exception ex)

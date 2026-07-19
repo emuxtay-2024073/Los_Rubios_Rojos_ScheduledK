@@ -1,7 +1,16 @@
 import { useEffect } from 'react';
+import { UserGroupIcon } from '@heroicons/react/24/outline';
 import { useUserManagementStore } from '../../features/auth/store/useUserManagementStore.js';
 import { Spinner } from '../../features/auth/components/Spinner.jsx';
 import { BackButton } from '../../shared/components/ui/BackButton.jsx';
+import mascotImg from '../../assets/img/DENTRO_mg.png';
+
+const getInitials = (value) => {
+  const clean = String(value || '').trim();
+  if (!clean) return '?';
+  const parts = clean.split(/\s+/);
+  return parts.length > 1 ? `${parts[0][0]}${parts[1][0]}`.toUpperCase() : clean.slice(0, 2).toUpperCase();
+};
 
 export const CoordinatorParentsPage = () => {
   const { users, loading, getAllUsers } = useUserManagementStore();
@@ -15,28 +24,47 @@ export const CoordinatorParentsPage = () => {
   return (
     <div className='space-y-6'>
       <BackButton />
-      <section className='rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-xl sm:p-8'>
-        <div>
-          <p className='text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700'>Listado de padres</p>
-          <h1 className='mt-4 text-3xl font-black text-gray-900'>Familias registradas</h1>
-          <p className='mt-3 text-sm text-gray-600'>Revisa los padres de familia que están activos en la aplicación.</p>
+      <section className='admin-hero p-6 sm:p-8'>
+        <div className='admin-reference-copy'>
+          <span className='admin-kicker'>Listado de padres</span>
+          <h1 className='admin-display admin-display--admin' style={{ fontSize: 'clamp(2.2rem,4vw,3.4rem)' }}>
+            Familias registradas
+          </h1>
+          <p className='admin-hero-copy'>Revisa los padres de familia que están activos en la aplicación.</p>
         </div>
       </section>
 
-      <section className='rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm'>
-        <h2 className='text-xl font-bold text-gray-900'>Padres de familia</h2>
+      <section className='admin-panel p-6 sm:p-8'>
+        <div className='mb-6 flex items-center gap-3'>
+          <span className='admin-stat-icon violet'>
+            <UserGroupIcon className='h-6 w-6' />
+          </span>
+          <h2 className='text-xl font-black text-[#202020]'>Padres de familia</h2>
+        </div>
+
         {loading ? (
           <div className='mt-6'>
             <Spinner />
           </div>
         ) : parents.length === 0 ? (
-          <p className='mt-4 text-sm text-gray-600'>Aún no hay padres registrados en el sistema.</p>
+          <div className='portal-empty-state'>
+            <img src={mascotImg} alt='Schedulito esperando' />
+            <p className='text-sm font-bold text-[#202020]'>Aún no hay padres registrados</p>
+            <p className='max-w-xs text-sm text-[#5e5e5e]'>
+              En cuanto se registren familias en el sistema aparecerán aquí.
+            </p>
+          </div>
         ) : (
-          <div className='mt-6 space-y-4'>
+          <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-3'>
             {parents.map((parent) => (
-              <article key={parent._id || parent.id || parent.email} className='rounded-3xl border border-gray-200 p-4'>
-                <p className='font-semibold text-gray-900'>{parent.nombres || parent.username || 'Padre sin nombre'}</p>
-                <p className='text-sm text-gray-600'>{parent.email}</p>
+              <article key={parent._id || parent.id || parent.email} className='admin-card flex items-center gap-4 p-5'>
+                <span className='flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(86,72,231,0.12)] text-sm font-black text-[#5648e7]'>
+                  {getInitials(parent.nombres || parent.username || parent.email)}
+                </span>
+                <div className='min-w-0'>
+                  <p className='truncate font-bold text-[#202020]'>{parent.nombres || parent.username || 'Padre sin nombre'}</p>
+                  <p className='truncate text-sm text-[#5e5e5e]'>{parent.email}</p>
+                </div>
               </article>
             ))}
           </div>

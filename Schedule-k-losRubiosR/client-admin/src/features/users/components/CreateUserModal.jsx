@@ -35,7 +35,7 @@ export const CreateUserModal = ({ isOpen, onClose, onCreate, loading, error }) =
   return (
     <div className='admin-modal-backdrop fixed inset-0 z-50 flex items-center justify-center px-3 sm:px-4'>
       <div className='admin-panel flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden shadow-2xl'>
-        <div className='sticky top-0 z-10 bg-gradient-to-r from-[#DC2626] to-[#7C2D12] p-5 text-white sm:p-6'>
+        <div className='sticky top-0 z-10 bg-gradient-to-r from-[#5648e7] to-[#4438d8] p-5 text-white sm:p-6'>
           <h2 className='text-xl font-black sm:text-2xl'>Nuevo usuario</h2>
           <p className='text-xs opacity-80 sm:text-sm'>
             Completa la informacion para registrar un nuevo usuario
@@ -125,7 +125,7 @@ export const CreateUserModal = ({ isOpen, onClose, onCreate, loading, error }) =
 
           {error && <p className='text-red-600 text-sm text-center'>{error}</p>}
 
-          <div className='flex flex-col-reverse gap-3 border-t border-[#7C2D12]/10 pt-4 sm:flex-row sm:justify-end'>
+          <div className='flex flex-col-reverse gap-3 border-t border-[rgba(86,72,231,0.1)] pt-4 sm:flex-row sm:justify-end'>
             <button
               type='button'
               onClick={() => {

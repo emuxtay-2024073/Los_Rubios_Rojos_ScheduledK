@@ -13,7 +13,7 @@ export const ClientPage = () => {
               Schedule-K - Sistema de Gestión de Citas
             </h1>
             <p className='max-w-2xl text-base text-gray-700 sm:text-lg'>
-              Gestiona tus citas y reservaciones de manera eficiente. Accede a tu calendario,
+              Gestiona tus citas de manera eficiente. Accede a tu calendario,
               revisa tus próximas citas y mantente organizado.
             </p>
           </div>
@@ -52,7 +52,7 @@ export const ClientPage = () => {
             className='rounded-3xl border border-gray-200 bg-card p-6 shadow-sm transition hover:border-main-blue hover:shadow-md'
           >
             <p className='text-xs font-semibold uppercase tracking-[0.2em] text-main-blue'>Reservas</p>
-            <p className='mt-3 text-lg font-semibold text-gray-900'>Ver mis reservaciones</p>
+            <p className='mt-3 text-lg font-semibold text-gray-900'>Ver mis citas</p>
           </Link>
         </div>
       </section>

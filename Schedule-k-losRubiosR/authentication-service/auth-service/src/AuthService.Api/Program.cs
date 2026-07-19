@@ -4,13 +4,19 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using MongoDB.Driver;
 using System.Text;
+using System.Text.Json;
 using AuthService.Api.Data;
 using AuthService.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Controllers
-builder.Services.AddControllers();
+// Controllers con configuración JSON case-insensitive
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
 
 // MongoDB
 builder.Services.Configure<MongoDbSettings>(
@@ -31,6 +37,15 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        // IMPORTANTE: por defecto, JwtSecurityTokenHandler remapea el claim corto "role"
+        // (y otros como "sub", "email") a URIs largas de ClaimTypes (p.ej.
+        // "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"). Como abajo
+        // configuramos RoleClaimType = "role" (nombre corto), ese remapeo automático
+        // hacía que [Authorize(Roles = "...")] nunca encontrara el claim de rol y
+        // devolviera 403 aunque el token tuviera el rol correcto. Desactivamos el
+        // remapeo para que los claims se lean tal cual vienen en el JWT.
+        options.MapInboundClaims = false;
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -40,7 +55,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+            NameClaimType = "unique_name",
+            RoleClaimType = "role"
         };
     });
 

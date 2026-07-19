@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BackButton } from '../../shared/components/ui/BackButton.jsx';
-import { showError, showSuccess } from '../../shared/utils/toast.js';
-import { createCalendarNote, getAppointments, getCalendarNotes, updateAppointment } from '../../services/adminApi.js';
+import { showSuccess } from '../../shared/utils/toast.js';
+import { createCalendarNote, getAppointments, getCalendarNotes } from '../../services/adminApi.js';
 
 const STORAGE_NOTES_PREFIX = 'coordinator-day-notes-';
 const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -60,20 +61,6 @@ const parseStoredNotes = (raw) => {
   } catch {
     return {};
   }
-};
-
-const formatInputDate = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 10);
-};
-
-const formatInputTime = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(11, 16);
 };
 
 const loadLocalNotesFromStorage = () => {
@@ -147,15 +134,12 @@ const formatAppointmentTime = (appointment, field) => {
 };
 
 export const CoordinatorCalendarPage = () => {
+  const navigate = useNavigate();
   const [selectedDay, setSelectedDay] = useState(today.getDate());
   const [appointments, setAppointments] = useState([]);
   const [loadingAppointments, setLoadingAppointments] = useState(true);
   const [noteText, setNoteText] = useState('');
   const [notes, setNotes] = useState({});
-  const [rescheduleDate, setRescheduleDate] = useState('');
-  const [rescheduleStart, setRescheduleStart] = useState('');
-  const [rescheduleEnd, setRescheduleEnd] = useState('');
-  const [rescheduleLoading, setRescheduleLoading] = useState(false);
 
   const totalNotesCount = useMemo(
     () => Object.values(notes).reduce((count, value) => count + (Array.isArray(value) ? value.length : 0), 0),
@@ -235,18 +219,6 @@ export const CoordinatorCalendarPage = () => {
 
   const selectedAppointment = useMemo(() => appointmentMap.get(selectedDay) || null, [appointmentMap, selectedDay]);
 
-  useEffect(() => {
-    if (selectedAppointment && (selectedAppointment.status || '').toString().trim().toUpperCase() === 'CANCELLED') {
-      setRescheduleDate(formatInputDate(selectedAppointment.date));
-      setRescheduleStart(formatInputTime(selectedAppointment.startTime));
-      setRescheduleEnd(formatInputTime(selectedAppointment.endTime));
-    } else {
-      setRescheduleDate('');
-      setRescheduleStart('');
-      setRescheduleEnd('');
-    }
-  }, [selectedAppointment]);
-
   const selectedNotes = notes[selectedDay] || [];
 
   useEffect(() => {
@@ -278,46 +250,26 @@ export const CoordinatorCalendarPage = () => {
     }
   };
 
-  const handleRescheduleAppointment = async () => {
-    if (!selectedAppointment) {
-      showError('Selecciona una cita cancelada para reagendar.');
-      return;
-    }
+  const handleGoToRescheduleInCitas = () => {
+    if (!selectedAppointment) return;
 
-    if (!rescheduleDate || !rescheduleStart || !rescheduleEnd) {
-      showError('Completa fecha de reprogramación, inicio y fin.');
-      return;
-    }
-
-    try {
-      setRescheduleLoading(true);
-      await updateAppointment(selectedAppointment._id || selectedAppointment.id, {
-        date: rescheduleDate,
-        startTime: rescheduleStart,
-        endTime: rescheduleEnd,
-      });
-      showSuccess('Cita reagendada correctamente.');
-      await loadData();
-    } catch (error) {
-      const apiMessage = error?.response?.data?.message || error?.message || 'No se pudo reagendar la cita';
-      showError(apiMessage);
-    } finally {
-      setRescheduleLoading(false);
-    }
+    navigate('/coordinador/citas', {
+      state: { rescheduleAppointmentId: selectedAppointment._id || selectedAppointment.id },
+    });
   };
 
   return (
     <div className='space-y-8'>
       <BackButton />
-      <section className='rounded-[2rem] border border-white/80 bg-gradient-to-r from-emerald-50 via-white to-sky-50 p-8 shadow-xl sm:p-10'>
-        <div className='max-w-5xl'>
-          <p className='text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700'>Calendario personal</p>
-          <h1 className='mt-4 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl'>Agenda del coordinador</h1>
-          <p className='mt-4 max-w-2xl text-base text-slate-600 sm:text-lg'>Visualiza tus próximas citas y tu disponibilidad semanal en un calendario amplio.</p>
+      <section className='admin-hero p-8 sm:p-10'>
+        <div className='admin-reference-copy max-w-5xl'>
+          <span className='admin-kicker'>Calendario personal</span>
+          <h1 className='admin-display admin-display--admin' style={{ fontSize: 'clamp(2.4rem,4.4vw,3.8rem)' }}>Agenda del coordinador</h1>
+          <p className='admin-hero-copy'>Visualiza tus próximas citas y tu disponibilidad semanal en un calendario amplio.</p>
         </div>
       </section>
 
-      <section className='rounded-[2rem] border border-white/70 bg-white p-6 shadow-2xl sm:p-8'>
+      <section className='admin-panel p-6 sm:p-8'>
         <div className='grid gap-6 lg:grid-cols-[1.18fr_0.82fr]'>
           <div className='rounded-[2rem] border border-slate-200 bg-slate-50 p-6 shadow-inner'>
             <div className='mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
@@ -375,8 +327,8 @@ export const CoordinatorCalendarPage = () => {
                       className={`min-h-[6rem] overflow-hidden rounded-3xl border p-3 text-left transition focus:outline-none ${
                         day
                           ? isSelected
-                            ? 'border-emerald-500 bg-emerald-50 shadow-sm'
-                            : 'border-slate-200 bg-white hover:border-emerald-300'
+                            ? 'border-[#5648e7] bg-[rgba(86,72,231,0.08)] shadow-sm'
+                            : 'border-slate-200 bg-white hover:border-[rgba(86,72,231,0.35)]'
                           : 'border-transparent bg-slate-100 cursor-default'
                       }`}
                       disabled={!day}
@@ -385,7 +337,7 @@ export const CoordinatorCalendarPage = () => {
                         <span className='text-sm font-semibold text-slate-900'>{day || ''}</span>
                         <div className='flex items-center gap-1'>
                           {hasNotes && <span className='h-2.5 w-2.5 rounded-full bg-sky-500' />}
-                          {appointment && <span className='h-2.5 w-2.5 rounded-full bg-emerald-500' />}
+                          {appointment && <span className='h-2.5 w-2.5 rounded-full bg-[#5648e7]' />}
                         </div>
                       </div>
                       {appointment ? (
@@ -437,46 +389,16 @@ export const CoordinatorCalendarPage = () => {
                   {selectedAppointment.status?.toString().trim().toUpperCase() === 'CANCELLED' && (
                     <div className='mt-6 rounded-3xl border border-red-200 bg-red-50 p-5'>
                       <p className='text-sm font-semibold text-red-700'>Reagendar cita cancelada</p>
-                      <p className='mt-2 text-sm text-slate-600'>Selecciona una nueva fecha y horario para enviar al padre.</p>
-                      <div className='mt-4 space-y-4'>
-                        <div>
-                          <label className='text-sm font-semibold text-slate-700'>Nueva fecha</label>
-                          <input
-                            type='date'
-                            value={rescheduleDate}
-                            onChange={(e) => setRescheduleDate(e.target.value)}
-                            className='mt-2 w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
-                          />
-                        </div>
-                        <div className='grid gap-3 sm:grid-cols-2'>
-                          <div>
-                            <label className='text-sm font-semibold text-slate-700'>Hora inicio</label>
-                            <input
-                              type='time'
-                              value={rescheduleStart}
-                              onChange={(e) => setRescheduleStart(e.target.value)}
-                              className='mt-2 w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
-                            />
-                          </div>
-                          <div>
-                            <label className='text-sm font-semibold text-slate-700'>Hora fin</label>
-                            <input
-                              type='time'
-                              value={rescheduleEnd}
-                              onChange={(e) => setRescheduleEnd(e.target.value)}
-                              className='mt-2 w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
-                            />
-                          </div>
-                        </div>
-                        <button
-                          type='button'
-                          onClick={handleRescheduleAppointment}
-                          disabled={rescheduleLoading}
-                          className='mt-2 w-full rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60'
-                        >
-                          {rescheduleLoading ? 'Reagendando...' : 'Reagendar cita'}
-                        </button>
-                      </div>
+                      <p className='mt-2 text-sm text-slate-600'>
+                        Para reagendar esta cita, ve a la vista de Citas.
+                      </p>
+                      <button
+                        type='button'
+                        onClick={handleGoToRescheduleInCitas}
+                        className='mt-4 w-full rounded-full bg-[#5648e7] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4438d8]'
+                      >
+                        Reagendar cita
+                      </button>
                     </div>
                   )}
                 </div>
@@ -494,7 +416,7 @@ export const CoordinatorCalendarPage = () => {
                 value={noteText}
                 onChange={(event) => setNoteText(event.target.value)}
                 placeholder='Escribe aquí tu nota para este día...'
-                className='mt-4 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
+                className='mt-4 w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition focus:border-[#5648e7] focus:ring-2 focus:ring-[rgba(86,72,231,0.15)]'
               />
               <div className='mt-4 flex items-center justify-between gap-4'>
                 <span className='text-sm text-slate-500'>
@@ -503,7 +425,7 @@ export const CoordinatorCalendarPage = () => {
                 <button
                   type='button'
                   onClick={saveNote}
-                  className='rounded-full bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700'
+                  className='rounded-full bg-[#5648e7] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#4438d8]'
                 >
                   Guardar apunte
                 </button>

@@ -225,17 +225,11 @@ class AppointmentService {
       throw new Error("Solo se pueden reagendar citas que estén canceladas");
     }
 
-    // No se puede reagendar para días anteriores a la cita cancelada.
-    // El mismo día es válido si el coordinador elige un nuevo horario.
-    const originalDate = this.normalizeDate(appointment.date);
     const newAppointmentDate = this.normalizeDate(newDate);
-    if (newAppointmentDate < originalDate) {
-      throw new Error(
-        "No se puede reagendar para días anteriores a la cita cancelada",
-      );
-    }
 
-    // Validar que no sea una fecha pasada
+    // Validar que no sea una fecha pasada respecto a hoy.
+    // Sí se permite reagendar a una fecha anterior a la cita original cancelada,
+    // siempre y cuando no sea anterior al día actual.
     const today = this.normalizeDate(new Date());
     if (newAppointmentDate < today) {
       throw new Error("No se permite reagendar citas a fechas pasadas");

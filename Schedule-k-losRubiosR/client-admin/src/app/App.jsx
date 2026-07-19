@@ -9,10 +9,23 @@ import { UiConfirmHost } from '../features/auth/components/ConfirmModal.jsx';
 
 export const App = () => {
   const checkAuth = useAuthStore((state) => state.checkAuth);
+  const isLoadingAuth = useAuthStore((state) => state.isLoadingAuth);
 
   useEffect(() => {
     checkAuth();
-  }, [checkAuth]);
+  }, []);
+
+  if (isLoadingAuth) {
+    return (
+      <div className='flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100'>
+        <div className='flex flex-col items-center gap-4'>
+          <div className='h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-slate-600' />
+          <p className='text-slate-600'>Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Toaster

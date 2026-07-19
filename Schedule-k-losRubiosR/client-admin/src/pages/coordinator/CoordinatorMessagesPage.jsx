@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { ChatBubbleLeftRightIcon, MegaphoneIcon } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../features/auth/store/authStore.js';
 import { BackButton } from '../../shared/components/ui/BackButton.jsx';
 import { showSuccess } from '../../shared/utils/toast.js';
 import { createNotification, getMyNotifications } from '../../services/adminApi.js';
+import mascotImg from '../../assets/img/DENTRO_mg.png';
 
 export const CoordinatorMessagesPage = () => {
   const user = useAuthStore((state) => state.user);
@@ -53,42 +55,49 @@ export const CoordinatorMessagesPage = () => {
   return (
     <div className='space-y-6'>
       <BackButton />
-      <section className='rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-xl sm:p-8'>
-        <div>
-          <p className='text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700'>Mensaje general</p>
-          <h1 className='mt-4 text-3xl font-black text-gray-900'>Comunicar a todos</h1>
-          <p className='mt-3 text-sm text-gray-600'>Envía un mensaje general a todas las personas que usan la aplicación.</p>
+      <section className='admin-hero p-6 sm:p-8'>
+        <div className='admin-reference-copy'>
+          <span className='admin-kicker'>Mensaje general</span>
+          <h1 className='admin-display admin-display--admin' style={{ fontSize: 'clamp(2.2rem,4vw,3.4rem)' }}>
+            Comunicar a todos
+          </h1>
+          <p className='admin-hero-copy'>Envía un mensaje general a todas las personas que usan la aplicación.</p>
         </div>
       </section>
 
-      <section className='rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm'>
-        <div className='rounded-3xl bg-slate-50 p-6'>
-          <p className='text-sm font-semibold text-slate-900'>Escribe aquí tu mensaje</p>
-          <textarea
-            rows={8}
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            placeholder='Escribe un anuncio que verán todos los padres y coordinadores...'
-            className='mt-4 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100'
-          />
-          <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-            <p className='text-sm text-slate-500'>Este mensaje se guarda localmente y será visible para padres y coordinadores en su vista.</p>
-            <button
-              type='button'
-              onClick={saveMessage}
-              className='rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700'
-            >
-              Guardar mensaje
-            </button>
+      <section className='admin-panel p-6 sm:p-8'>
+        <div className='admin-mini-panel'>
+          <span className='portal-mascot-bubble h-14 w-14 flex-shrink-0'>
+            <img src={mascotImg} alt='Schedulito' />
+          </span>
+          <div className='min-w-0 flex-1'>
+            <p className='text-sm font-bold text-[#202020]'>Escribe aquí tu mensaje</p>
+            <textarea
+              rows={8}
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+              placeholder='Escribe un anuncio que verán todos los padres y coordinadores...'
+              className='admin-input mt-4 w-full px-4 py-3 text-sm'
+            />
+            <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <p className='text-sm text-[#5e5e5e]'>Este mensaje se guarda localmente y será visible para padres y coordinadores en su vista.</p>
+              <button type='button' onClick={saveMessage} className='admin-button-primary px-6 text-sm'>
+                <MegaphoneIcon className='h-5 w-5' />
+                Guardar mensaje
+              </button>
+            </div>
           </div>
         </div>
 
         {savedMessage?.text && (
-          <div className='mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm'>
-            <p className='text-sm font-semibold uppercase tracking-[0.2em] text-emerald-700'>Mensaje actual</p>
-            <p className='mt-3 text-sm text-slate-700'>{savedMessage.text}</p>
+          <div className='admin-card mt-6 p-6'>
+            <div className='flex items-center gap-2'>
+              <ChatBubbleLeftRightIcon className='h-5 w-5 text-[#5648e7]' />
+              <p className='text-sm font-bold uppercase tracking-[0.2em] text-[#5648e7]'>Mensaje actual</p>
+            </div>
+            <p className='mt-3 text-sm text-[#202020]'>{savedMessage.text}</p>
             {savedMessage.author && (
-              <p className='mt-2 text-sm text-slate-500'>Publicado por: {savedMessage.author}</p>
+              <p className='mt-2 text-sm text-[#5e5e5e]'>Publicado por: {savedMessage.author}</p>
             )}
           </div>
         )}

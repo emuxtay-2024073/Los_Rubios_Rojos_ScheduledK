@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../features/auth/store/authStore.js';
-import { getParentAppointments, getMyNotifications } from '../../services/adminApi.js';
+import { getParentAppointments, getMyNotifications, cancelAppointment } from '../../services/adminApi.js';
 import { showError, showSuccess } from '../../shared/utils/toast.js';
-import { CalendarDaysIcon, ShieldCheckIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import {
+  CalendarDaysIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  MegaphoneIcon,
+} from '@heroicons/react/24/outline';
+import mascotHero from '../../assets/img/REGISTER_IMG.png';
+import mascotSmall from '../../assets/img/DENTRO_mg.png';
 
 const formatDate = (value) => {
   if (!value) return 'Fecha desconocida';
@@ -184,6 +191,7 @@ export const ParentPage = () => {
       description: 'Citas que aún esperan tu respuesta.',
       icon: SparklesIcon,
       badge: pendingAppointments.length === 0 ? 'Sin urgencia' : 'Revisa ahora',
+      tone: 'violet',
     },
     {
       title: 'Confirmadas',
@@ -191,6 +199,7 @@ export const ParentPage = () => {
       description: 'Citas que ya aceptaste con el coordinador.',
       icon: CalendarDaysIcon,
       badge: confirmedAppointments.length ? 'Bien hecho' : 'Aún no hay',
+      tone: 'mint',
     },
     {
       title: 'Canceladas',
@@ -198,98 +207,122 @@ export const ParentPage = () => {
       description: 'Citas rechazadas o canceladas.',
       icon: ShieldCheckIcon,
       badge: cancelledAppointments.length ? 'Revisar cambios' : 'Sin registros',
+      tone: 'green',
     },
   ];
 
   return (
     <div className='space-y-8'>
-      <section className='rounded-[2rem] border border-white/60 bg-white/80 p-6 shadow-xl backdrop-blur sm:p-8 lg:p-10'>
-        <div className='flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between'>
-          <div className='max-w-2xl space-y-4'>
-            <p className='inline-flex rounded-full border border-sky-200 bg-sky-50 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-sky-700'>Portal padre de familia</p>
-            <h1 className='text-4xl font-black tracking-tight text-gray-900 sm:text-5xl'>Vista para padres</h1>
-            <p className='text-base text-gray-700 sm:text-lg'>El coordinador asigna la cita y tú recibes la notificación para conocer la fecha, la hora y los detalles de la reunión.</p>
+      <section className='admin-hero p-6 sm:p-8 lg:p-10'>
+        <div className='admin-reference-grid lg:grid-cols-[1.05fr_0.95fr]'>
+          <div className='admin-reference-copy'>
+            <span className='admin-kicker'>Portal padre de familia</span>
+            <h1 className='admin-display admin-display--admin'>
+              ¡Hola{user?.username ? `, ${user.username}` : ''}!
+            </h1>
+            <p className='admin-hero-copy admin-hero-copy--narrow'>
+              El coordinador asigna la cita y tú recibes la notificación para conocer la fecha, la
+              hora y los detalles de la reunión. Schedulito te mantiene al tanto de todo.
+            </p>
+            <span className='admin-soft-pill w-fit'>Acceso personalizado</span>
           </div>
-          <div className='rounded-3xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm font-semibold text-sky-800'>Acceso personalizado</div>
+
+          <div className='admin-reference-stage'>
+            <span className='admin-reference-wave' aria-hidden='true' />
+            <span className='admin-reference-pill admin-reference-pill--top'>
+              <span className='block text-[0.62rem] font-bold uppercase tracking-[0.18em] text-[#5e5e5e]'>Próxima cita</span>
+              <span className='block text-sm font-black text-[#202020]'>{nextAppointmentLabel}</span>
+            </span>
+            <img src={mascotHero} alt='Schedulito, tu asistente de citas' className='admin-hero-illustration absolute bottom-2 right-2' />
+          </div>
         </div>
       </section>
 
-      <section className='rounded-[2rem] border border-emerald-200 bg-emerald-50 p-6 shadow-sm'>
-        <p className='text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700'>Mensaje del coordinador</p>
-        {generalMessage?.text ? (
-          <>
-            <p className='mt-3 text-sm text-slate-700'>{generalMessage.text}</p>
-            {generalMessage.author && (
-              <p className='mt-2 text-sm text-slate-500'>Publicado por: {generalMessage.author}</p>
-            )}
-          </>
-        ) : (
-          <div className='mt-3 rounded-2xl border border-dashed border-emerald-100 bg-emerald-25 p-4 text-sm text-slate-600'>
-            No hay mensajes generales del coordinador en este momento.
-          </div>
-        )}
+      <section className='admin-panel flex flex-col gap-4 p-6 sm:flex-row sm:items-center'>
+        <span className='admin-stat-icon mint flex-shrink-0'>
+          <MegaphoneIcon className='h-6 w-6' />
+        </span>
+        <div className='min-w-0 flex-1'>
+          <p className='text-sm font-bold uppercase tracking-[0.2em] text-[#5648e7]'>Mensaje del coordinador</p>
+          {generalMessage?.text ? (
+            <>
+              <p className='mt-2 text-sm text-[#202020]'>{generalMessage.text}</p>
+              {generalMessage.author && (
+                <p className='mt-1 text-xs text-[#5e5e5e]'>Publicado por: {generalMessage.author}</p>
+              )}
+            </>
+          ) : (
+            <p className='mt-2 text-sm text-[#5e5e5e]'>No hay mensajes generales del coordinador en este momento.</p>
+          )}
+        </div>
       </section>
 
       <section className='grid gap-5 lg:grid-cols-[1.35fr_0.85fr]'>
-        <article className='rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm'>
-          <p className='text-sm font-semibold uppercase tracking-[0.3em] text-sky-700'>Próxima cita</p>
-          <h2 className='mt-3 text-3xl font-black text-gray-900'>{nextAppointment?.title || 'Próxima cita disponible'}</h2>
-          <p className='mt-4 text-sm text-gray-600'>{nextAppointmentLabel}</p>
+        <article className='admin-panel p-8'>
+          <p className='admin-kicker'>Próxima cita</p>
+          <h2 className='mt-3 text-3xl font-black text-[#202020]'>{nextAppointment?.title || 'Próxima cita disponible'}</h2>
+          <p className='mt-4 text-sm text-[#5e5e5e]'>{nextAppointmentLabel}</p>
           {nextAppointment?.reason && (
-            <div className='mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5'>
-              <p className='text-sm font-semibold text-slate-900'>Motivo</p>
-              <p className='mt-2 text-sm text-slate-700'>{nextAppointment.reason}</p>
+            <div className='admin-card mt-6 p-5'>
+              <p className='text-sm font-bold text-[#202020]'>Motivo</p>
+              <p className='mt-2 text-sm text-[#5e5e5e]'>{nextAppointment.reason}</p>
             </div>
           )}
-          <div className='mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4'>
-            <p className='text-xs uppercase tracking-[0.18em] text-slate-500'>Enviado por</p>
-            <p className='mt-1 text-sm font-semibold text-slate-900'>{getCoordinatorLabel(nextAppointment)}</p>
+          <div className='admin-card mt-4 p-4'>
+            <p className='text-xs uppercase tracking-[0.18em] text-[#5e5e5e]'>Enviado por</p>
+            <p className='mt-1 text-sm font-semibold text-[#202020]'>{getCoordinatorLabel(nextAppointment)}</p>
           </div>
 
           <div className='mt-6 grid gap-4 sm:grid-cols-3'>
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.title} className='rounded-3xl border border-slate-200 bg-slate-50 p-5'>
+                <div key={stat.title} className='admin-card admin-stat-card p-5'>
                   <div className='flex items-center justify-between'>
-                    <p className='text-sm font-semibold uppercase tracking-[0.2em] text-slate-700'>{stat.title}</p>
-                    <Icon className='h-5 w-5 text-slate-500' />
+                    <p className='text-xs font-bold uppercase tracking-[0.16em] text-[#5e5e5e]'>{stat.title}</p>
+                    <span className={`admin-stat-icon ${stat.tone} h-9 w-9`}>
+                      <Icon className='h-4 w-4' />
+                    </span>
                   </div>
-                  <p className='mt-3 text-3xl font-black text-gray-900'>{stat.value}</p>
-                  <p className='mt-2 text-sm text-gray-600'>{stat.badge}</p>
+                  <p className='mt-3 text-3xl font-black text-[#202020]'>{stat.value}</p>
+                  <p className='mt-2 text-sm text-[#5e5e5e]'>{stat.badge}</p>
                 </div>
               );
             })}
           </div>
         </article>
 
-        <article className='rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm'>
-          <p className='text-sm font-semibold uppercase tracking-[0.3em] text-sky-700'>Citas próximas</p>
-          <h2 className='mt-3 text-2xl font-black text-gray-900'>Siguientes citas asignadas</h2>
+        <article className='admin-panel p-8'>
+          <p className='admin-kicker'>Citas próximas</p>
+          <h2 className='mt-3 text-2xl font-black text-[#202020]'>Siguientes citas asignadas</h2>
           <div className='mt-6 space-y-4'>
             {upcomingAppointments.length === 0 ? (
-              <div className='rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500'>
-                No hay citas programadas para los próximos días.
+              <div className='portal-empty-state'>
+                <img src={mascotSmall} alt='Schedulito esperando citas' />
+                <p className='text-sm font-bold text-[#202020]'>Sin citas programadas</p>
+                <p className='text-sm text-[#5e5e5e]'>Aquí verás tus próximas citas en cuanto el coordinador las asigne.</p>
               </div>
             ) : (
               upcomingAppointments.slice(0, 4).map((appointment) => (
-                <div key={appointment._id || appointment.id} className='rounded-3xl border border-slate-200 bg-slate-50 p-4'>
-                  <p className='text-sm font-semibold text-slate-900'>{formatDate(appointment.date)}</p>
-                  <p className='mt-1 text-sm text-slate-600'>{`${formatTime(appointment.startTime)} - ${formatTime(appointment.endTime)}`}</p>
-                  <p className='mt-2 text-sm text-slate-700'>{appointment.reason || 'Sin información adicional'}</p>
-                  <p className='mt-2 text-xs uppercase tracking-[0.18em] text-slate-500'>Enviado por: {getCoordinatorLabel(appointment)}</p>
+                <div key={appointment._id || appointment.id} className='admin-card p-4'>
+                  <p className='text-sm font-semibold text-[#202020]'>{formatDate(appointment.date)}</p>
+                  <p className='mt-1 text-sm text-[#5e5e5e]'>{`${formatTime(appointment.startTime)} - ${formatTime(appointment.endTime)}`}</p>
+                  <p className='mt-2 text-sm text-[#202020]'>{appointment.reason || 'Sin información adicional'}</p>
+                  <p className='mt-2 text-xs uppercase tracking-[0.18em] text-[#5e5e5e]'>Enviado por: {getCoordinatorLabel(appointment)}</p>
                   {(appointment.status || '').toString().trim().toUpperCase() === 'PENDING' && (
                     <div className='mt-3 flex gap-3'>
                       <button
                         type='button'
                         onClick={() => handleCancelAppointment(appointment)}
-                        className='flex-1 rounded-2xl border border-red-200 bg-red-50 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100'
+                        className='admin-button-danger flex-1 px-4 text-sm'
+                        style={{ minHeight: '2.6rem' }}
                       >
                         Cancelar
                       </button>
                       <button
                         type='button'
-                        className='flex-1 rounded-2xl bg-emerald-600 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700'
+                        className='admin-button-primary flex-1 px-4 text-sm'
+                        style={{ minHeight: '2.6rem' }}
                       >
                         Confirmar
                       </button>
@@ -302,49 +335,51 @@ export const ParentPage = () => {
         </article>
       </section>
 
-      <section className='rounded-[2rem] border border-gray-200 bg-white p-6 shadow-sm'>
+      <section className='admin-panel p-6 sm:p-8'>
         <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
           <div>
-            <p className='text-sm font-semibold uppercase tracking-[0.25em] text-sky-700'>Resumen</p>
-            <h2 className='mt-2 text-2xl font-bold text-gray-900'>Citas pendientes</h2>
-            <p className='mt-2 text-gray-600'>Aquí verás un resumen de las citas que aún requieren tu confirmación.</p>
+            <p className='admin-kicker'>Resumen</p>
+            <h2 className='mt-2 text-2xl font-black text-[#202020]'>Citas pendientes</h2>
+            <p className='mt-2 text-[#5e5e5e]'>Aquí verás un resumen de las citas que aún requieren tu confirmación.</p>
           </div>
-          <div className='rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700'>Asignada por el coordinador</div>
+          <span className='admin-soft-pill w-fit'>Asignada por el coordinador</span>
         </div>
 
         <div className='mt-6 grid gap-4 lg:grid-cols-[1fr_0.9fr]'>
-          <div className='rounded-3xl border border-slate-200 bg-slate-50 p-6'>
-            <p className='text-sm font-semibold uppercase tracking-[0.25em] text-sky-700'>Total pendientes</p>
-            <p className='mt-3 text-4xl font-black text-gray-900'>{loading ? '...' : pendingAppointments.length}</p>
-            <p className='mt-3 text-sm text-gray-600'>Citas que están pendientes de tu respuesta.</p>
+          <div className='admin-card p-6'>
+            <p className='admin-kicker'>Total pendientes</p>
+            <p className='mt-3 text-4xl font-black text-[#202020]'>{loading ? '...' : pendingAppointments.length}</p>
+            <p className='mt-3 text-sm text-[#5e5e5e]'>Citas que están pendientes de tu respuesta.</p>
           </div>
 
           <div className='space-y-4'>
             {loading ? (
-              <div className='rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500'>
+              <div className='admin-card admin-skeleton p-6 text-center text-sm text-[#5e5e5e]'>
                 Cargando citas pendientes...
               </div>
             ) : pendingAppointments.length === 0 ? (
-              <div className='rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500'>
-                No hay citas pendientes en este momento.
+              <div className='portal-empty-state'>
+                <img src={mascotSmall} alt='Schedulito sin pendientes' />
+                <p className='text-sm font-bold text-[#202020]'>Todo al día</p>
+                <p className='text-sm text-[#5e5e5e]'>No hay citas pendientes en este momento.</p>
               </div>
             ) : (
-              <div className='rounded-3xl border border-slate-200 bg-white p-6 shadow-sm'>
-                <p className='text-sm font-semibold uppercase tracking-[0.25em] text-slate-500'>Próxima cita pendiente</p>
-                <h3 className='mt-3 text-xl font-bold text-gray-900'>{nextAppointment ? formatDate(nextAppointment.date) : 'Sin fecha'}</h3>
-                <p className='mt-2 text-sm text-gray-600'>
+              <div className='admin-card p-6'>
+                <p className='text-xs font-bold uppercase tracking-[0.25em] text-[#5e5e5e]'>Próxima cita pendiente</p>
+                <h3 className='mt-3 text-xl font-bold text-[#202020]'>{nextAppointment ? formatDate(nextAppointment.date) : 'Sin fecha'}</h3>
+                <p className='mt-2 text-sm text-[#5e5e5e]'>
                   {nextAppointment ? `${formatTime(nextAppointment.startTime)} - ${formatTime(nextAppointment.endTime)}` : 'Sin hora definida'}
                 </p>
-                <p className='mt-4 text-sm text-gray-700'>{nextAppointment?.reason || 'Razón no disponible'}</p>
+                <p className='mt-4 text-sm text-[#202020]'>{nextAppointment?.reason || 'Razón no disponible'}</p>
 
                 {pendingAppointments.length > 1 && (
                   <div className='mt-6 space-y-3'>
-                    <p className='text-sm font-semibold text-slate-900'>Otras citas pendientes</p>
+                    <p className='text-sm font-semibold text-[#202020]'>Otras citas pendientes</p>
                     <div className='space-y-2'>
                       {pendingAppointments.slice(1, 4).map((appointment) => (
-                        <div key={appointment._id || appointment.id} className='rounded-2xl border border-slate-200 bg-slate-50 p-4'>
-                          <p className='text-sm font-semibold text-slate-900'>{formatDate(appointment.date)}</p>
-                          <p className='text-sm text-slate-600'>{`${formatTime(appointment.startTime)} - ${formatTime(appointment.endTime)}`}</p>
+                        <div key={appointment._id || appointment.id} className='rounded-2xl border border-[rgba(32,32,32,0.08)] bg-[rgba(247,251,248,0.9)] p-4'>
+                          <p className='text-sm font-semibold text-[#202020]'>{formatDate(appointment.date)}</p>
+                          <p className='text-sm text-[#5e5e5e]'>{`${formatTime(appointment.startTime)} - ${formatTime(appointment.endTime)}`}</p>
                         </div>
                       ))}
                     </div>
@@ -357,34 +392,39 @@ export const ParentPage = () => {
       </section>
 
       {showCancelModal && selectedAppointmentToCancel && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
-          <div className='w-full max-w-md rounded-[2rem] border border-slate-200 bg-white p-8 shadow-2xl'>
-            <div className='mb-6'>
-              <p className='text-sm font-semibold uppercase tracking-[0.3em] text-red-700'>Cancelar cita</p>
-              <h2 className='mt-3 text-2xl font-black text-slate-900'>¿Cancelar la cita?</h2>
-              <p className='mt-2 text-sm text-slate-600'>
-                {formatDate(selectedAppointmentToCancel.date)} a las {formatTime(selectedAppointmentToCancel.startTime)}
-              </p>
+        <div className='portal-modal-backdrop'>
+          <div className='w-full max-w-md admin-panel p-8'>
+            <div className='mb-6 flex items-start gap-3'>
+              <span className='portal-mascot-bubble h-12 w-12 flex-shrink-0'>
+                <img src={mascotSmall} alt='Schedulito' />
+              </span>
+              <div>
+                <p className='text-xs font-bold uppercase tracking-[0.3em] text-[#b93144]'>Cancelar cita</p>
+                <h2 className='mt-2 text-xl font-black text-[#202020]'>¿Cancelar la cita?</h2>
+                <p className='mt-1 text-sm text-[#5e5e5e]'>
+                  {formatDate(selectedAppointmentToCancel.date)} a las {formatTime(selectedAppointmentToCancel.startTime)}
+                </p>
+              </div>
             </div>
 
-            <div className='mb-6 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4'>
+            <div className='admin-card mb-6 space-y-4 p-4'>
               <div>
-                <label className='text-sm font-semibold text-slate-700'>Sugiere una nueva fecha</label>
+                <label className='text-sm font-semibold text-[#202020]'>Sugiere una nueva fecha</label>
                 <input
                   type='date'
                   value={proposedDate}
                   onChange={(e) => setProposedDate(e.target.value)}
-                  className='mt-2 w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100'
+                  className='admin-input mt-2 w-full px-4 py-2 text-sm'
                 />
               </div>
 
               <div>
-                <label className='text-sm font-semibold text-slate-700'>Sugiere una hora</label>
+                <label className='text-sm font-semibold text-[#202020]'>Sugiere una hora</label>
                 <input
                   type='time'
                   value={proposedTime}
                   onChange={(e) => setProposedTime(e.target.value)}
-                  className='mt-2 w-full rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100'
+                  className='admin-input mt-2 w-full px-4 py-2 text-sm'
                 />
               </div>
             </div>
@@ -393,7 +433,7 @@ export const ParentPage = () => {
               <button
                 type='button'
                 onClick={() => setShowCancelModal(false)}
-                className='flex-1 rounded-full border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50'
+                className='admin-button-secondary flex-1 px-4 text-sm'
               >
                 Atrás
               </button>
@@ -401,7 +441,7 @@ export const ParentPage = () => {
                 type='button'
                 onClick={handleSubmitCancelation}
                 disabled={actionLoading}
-                className='flex-1 rounded-full bg-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60'
+                className='admin-button-danger flex-1 px-4 text-sm disabled:cursor-not-allowed disabled:opacity-60'
               >
                 {actionLoading ? 'Enviando...' : 'Cancelar cita'}
               </button>
@@ -412,5 +452,3 @@ export const ParentPage = () => {
     </div>
   );
 };
-
-

@@ -29,7 +29,9 @@ export const Users = () => {
   const { users, loading, error, getAllUsers, createUser, updateUserRole } =
     useUserManagementStore();
   const user = useAuthStore((state) => state.user);
-  const isSuperAdmin = user?.role?.toUpperCase() === 'SUPER_ADMIN';
+  const isAdmin = ['ADMIN', 'SUPER_ADMIN', 'ADMIN_ROLE'].includes(
+    (user?.role || '').toUpperCase(),
+  );
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [openCreateModal, setOpenCreateModal] = useState(false);
@@ -116,7 +118,9 @@ export const Users = () => {
     );
     if (!confirmed) return;
 
-    const response = await updateUserRole(candidate._id || candidate.id, nextRole);
+    // Normalizar el rol a minúsculas para que coincida con lo esperado por el backend
+    const normalizedRole = nextRole.toLowerCase();
+    const response = await updateUserRole(candidate._id || candidate.id, normalizedRole);
     if (response.success) {
       showSuccess(`Rol actualizado a ${nextRole}.`);
       return;
@@ -244,7 +248,7 @@ export const Users = () => {
                         </p>
                       </td>
                       <td className='px-5 py-4'>
-                        {isSuperAdmin && currentRole !== 'SUPER_ADMIN' && currentRole !== 'ADMIN' ? (
+                        {isAdmin && currentRole !== 'SUPER_ADMIN' && currentRole !== 'ADMIN' ? (
                           <select
                             value={currentRole}
                             onChange={(event) => handleUpdateUserRole(candidate, event.target.value)}
@@ -272,7 +276,7 @@ export const Users = () => {
                       <td className='px-5 py-4'>
                         {currentRole === 'SUPER_ADMIN' || currentRole === 'ADMIN' ? (
                           <span className='admin-status admin-status-warning'>Protegido</span>
-                        ) : isSuperAdmin ? (
+                        ) : isAdmin ? (
                           <span className='text-xs font-bold uppercase tracking-[0.14em] text-[#5E5E5E]'>
                             Ajustable
                           </span>

@@ -8,10 +8,8 @@ import { VerifyEmailPage } from '../../features/auth/pages/VerifyEmailPage.jsx';
 import { Dashboard } from '../../pages/Dashboard.jsx';
 import { Users } from '../../features/users/components/Users.jsx';
 import { Reservations } from '../../pages/Reservations.jsx';
-import { ClientPage } from '../../pages/client/ClientPage.jsx';
 import { LandingPage } from '../../pages/LandingPage.jsx';
 import { ClientReservationsPage } from '../../pages/client/ClientReservationsPage.jsx';
-import { ClientLayout } from '../layouts/ClientLayout.jsx';
 import { AdminPage } from '../../pages/admin/AdminPage.jsx';
 import { ParentLayout } from '../../pages/parent/ParentLayout.jsx';
 import { ParentPage } from '../../pages/parent/ParentPage.jsx';
@@ -25,12 +23,6 @@ export const AppRoutes = () => {
   return (
     <Routes>
       <Route path='/' element={<LandingPage />} />
-
-      {/* Public client routes */}
-      <Route path='/cliente' element={<ClientLayout />}>
-        <Route index element={<ClientPage />} />
-        <Route path='reservations' element={<ClientReservationsPage />} />
-      </Route>
 
       <Route
         path='/padre'

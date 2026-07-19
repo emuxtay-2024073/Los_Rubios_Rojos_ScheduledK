@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../features/auth/store/authStore.js';
 import { getAppointments, createAppointment, updateAppointment } from '../services/adminApi.js';
 import { useUserManagementStore } from '../features/auth/store/useUserManagementStore.js';
@@ -20,6 +21,8 @@ const formatTime = (value) => {
 };
 
 export const Reservations = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -77,11 +80,12 @@ export const Reservations = () => {
   const filteredAppointments = useMemo(
     () =>
       appointments.filter((appointment) => {
-        const query = search.toLowerCase();
+        if (!search.trim()) return true;
+        const query = String(search || '').toLowerCase().trim();
         return (
-          appointment.parentId?.toLowerCase().includes(query) ||
-          appointment.reason?.toLowerCase().includes(query) ||
-          appointment.status?.toLowerCase().includes(query)
+          String(appointment.parentId || '').toLowerCase().includes(query) ||
+          String(appointment.reason || '').toLowerCase().includes(query) ||
+          String(appointment.status || '').toLowerCase().includes(query)
         );
       }),
     [appointments, search],
@@ -112,6 +116,25 @@ export const Reservations = () => {
     setRescheduleEnd(appointment.endTime ? new Date(appointment.endTime).toISOString().slice(11, 16) : '');
     setRescheduleOpen(true);
   };
+
+  // Si venimos del botón "Reagendar cita" del calendario, abrimos el modal
+  // de reagendado automáticamente para esa cita específica.
+  useEffect(() => {
+    const appointmentId = location.state?.rescheduleAppointmentId;
+    if (!appointmentId || appointments.length === 0) return;
+
+    const target = appointments.find(
+      (item) => item._id === appointmentId || item.id === appointmentId,
+    );
+
+    if (target) {
+      handleOpenReschedule(target);
+    }
+
+    // Limpiamos el state de navegación para que el modal no se reabra
+    // si el usuario vuelve a esta vista más tarde.
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [appointments, location.state, location.pathname, navigate]);
 
   const handleRescheduleSubmit = async () => {
     if (!selectedAppointment) {
@@ -199,7 +222,7 @@ export const Reservations = () => {
         <div className='flex flex-col gap-4'>
           <BackButton />
           <div>
-            <p className='admin-kicker'>Citas y Reservaciones</p>
+            <p className='admin-kicker'>Citas</p>
             <h1 className='admin-title mt-2'>Citas</h1>
             <p className='admin-subtitle mt-2 text-sm'>Gestiona citas, horarios y estado de cada reservación.</p>
             {isAdmin && (
